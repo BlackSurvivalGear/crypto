@@ -31,11 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 
     // Initial UI with mocks
+    const watchlistIds = Store.getWatchlist();
     UI.isInWatchlist = (id) => Store.getWatchlist().includes(id);
-    UI.renderMarketCards(COINS);
+    UI.renderMarketCards(COINS, watchlistIds);
     UI.renderAssetTable(COINS);
     UI.renderPortfolio(PORTFOLIO, COINS);
-    UI.renderWatchlist(COINS, Store.getWatchlist());
+    UI.renderWatchlist(COINS, watchlistIds);
     UI.renderNews(NEWS);
     UI.initMainChart('BTC');
 
@@ -43,6 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load live data
     await loadDashboardData();
+
+    // Set up refresh intervals
+    setInterval(async () => {
+        const fng = await API.fetchFearAndGreed();
+        UI.renderFearAndGreed(fng);
+    }, 5 * 60 * 1000); // 5 minutes
 });
 
 async function loadDashboardData() {
@@ -66,12 +73,14 @@ async function loadDashboardData() {
         const news = await API.fetchNews();
         const portfolio = Store.getPortfolio();
         const watchlistIds = Store.getWatchlist();
+        const fng = await API.fetchFearAndGreed();
 
-        UI.renderMarketCards(allCoins);
+        UI.renderMarketCards(allCoins, watchlistIds);
         UI.renderAssetTable(allCoins);
         UI.renderWatchlist(allCoins, watchlistIds);
         UI.renderNews(news);
         UI.renderPortfolio(portfolio, allCoins);
+        UI.renderFearAndGreed(fng);
 
         updateGlobalStats(allCoins);
     } catch (error) {
@@ -118,6 +127,60 @@ function setupInteractivity() {
         });
     }
 
+    // Watchlist Search
+    const watchlistSearch = document.getElementById('watchlist-search');
+    const watchlistSearchResults = document.getElementById('watchlist-search-results');
+    if (watchlistSearch) {
+        watchlistSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 1) {
+                watchlistSearchResults.classList.add('hidden');
+                return;
+            }
+            const results = allCoins.filter(c =>
+                c.name.toLowerCase().includes(query) ||
+                c.symbol.toLowerCase().includes(query)
+            ).slice(0, 5);
+            UI.renderWatchlistSearchResults(results);
+        });
+
+        // Close search results on click outside
+        document.addEventListener('click', (e) => {
+            if (!watchlistSearch.contains(e.target) && !watchlistSearchResults.contains(e.target)) {
+                watchlistSearchResults.classList.add('hidden');
+            }
+        });
+    }
+
+    // Add to Watchlist
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.add-to-watchlist-btn');
+        if (btn) {
+            const id = btn.dataset.id;
+            const watchlist = Store.addToWatchlist(id);
+            UI.renderWatchlist(allCoins, watchlist);
+            UI.renderMarketCards(allCoins, watchlist);
+            UI.renderAssetTable(allCoins);
+            watchlistSearchResults.classList.add('hidden');
+            watchlistSearch.value = '';
+            UI.showNotification('Added to watchlist', 'success');
+        }
+    });
+
+    // Remove from Watchlist
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.remove-watchlist-item');
+        if (btn) {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const watchlist = Store.removeFromWatchlist(id);
+            UI.renderWatchlist(allCoins, watchlist);
+            UI.renderMarketCards(allCoins, watchlist);
+            UI.renderAssetTable(allCoins);
+            UI.showNotification('Removed from watchlist', 'info');
+        }
+    });
+
     // Timeframe Buttons
     const buttons = document.querySelectorAll('.timeframe-btn');
     const intervalMap = {
@@ -147,28 +210,36 @@ function setupInteractivity() {
         }
     });
 
-    // Watchlist Toggles
+    // Watchlist Toggles in Table
     document.addEventListener('click', (e) => {
         const toggle = e.target.closest('.watchlist-toggle');
         if (toggle) {
             e.stopPropagation();
             const id = toggle.dataset.id;
             const watchlist = Store.toggleWatchlist(id);
-            UI.renderAssetTable(allCoins.length > 0 ? allCoins : COINS);
-            UI.renderWatchlist(allCoins.length > 0 ? allCoins : COINS, watchlist);
+            const coins = allCoins.length > 0 ? allCoins : COINS;
+            UI.renderAssetTable(coins);
+            UI.renderWatchlist(coins, watchlist);
+            UI.renderMarketCards(coins, watchlist);
         }
     });
 
     // Asset Selection for Chart
     document.addEventListener('click', (e) => {
-        const row = e.target.closest('tr[data-id], [data-id].group');
-        if (row && !e.target.closest('.watchlist-toggle')) {
-            const id = row.dataset.id;
+        const target = e.target.closest('tr[data-id], #watchlist [data-id], .market-card');
+        if (target && !e.target.closest('.watchlist-toggle') && !e.target.closest('.remove-watchlist-item')) {
+            const id = target.dataset.id;
             const coins = allCoins.length > 0 ? allCoins : COINS;
             const coin = coins.find(c => c.id === id);
             if (coin) {
+                UI.currentCoinId = id;
                 UI.initMainChart(coin.symbol, UI.currentInterval || 'D');
                 updateChartHeader(coin);
+
+                // Only update visual highlights, not the whole component unless necessary
+                const watchlist = Store.getWatchlist();
+                UI.renderWatchlist(coins, watchlist);
+                UI.renderMarketCards(coins, watchlist);
             }
         }
     });

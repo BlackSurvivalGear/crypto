@@ -43,7 +43,26 @@ export const Store = {
     },
 
     getWatchlist() {
-        return this.get('watchlist', ['bitcoin', 'ethereum', 'solana']);
+        return this.get('watchlist', ['bitcoin', 'ethereum', 'solana', 'ripple']);
+    },
+
+    addToWatchlist(id) {
+        let watchlist = this.getWatchlist();
+        if (!watchlist.includes(id)) {
+            watchlist.push(id);
+            this.set('watchlist', watchlist);
+        }
+        return watchlist;
+    },
+
+    removeFromWatchlist(id) {
+        let watchlist = this.getWatchlist();
+        const index = watchlist.indexOf(id);
+        if (index > -1) {
+            watchlist.splice(index, 1);
+            this.set('watchlist', watchlist);
+        }
+        return watchlist;
     },
 
     toggleWatchlist(id) {
