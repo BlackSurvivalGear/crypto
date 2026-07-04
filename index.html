@@ -206,6 +206,21 @@
 
                 <!-- Sidebar Area -->
                 <div class="space-y-8">
+                    <!-- Watchlist -->
+                    <section id="watchlist" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold">Watchlist</h2>
+                            <div class="relative flex-1 max-w-[150px] ml-4">
+                                <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400"></i>
+                                <input type="text" id="watchlist-search" placeholder="Add coin..." class="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <div id="watchlist-search-results" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-lg shadow-xl z-[60] hidden max-h-48 overflow-y-auto no-scrollbar"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-4" id="watchlist-items">
+                            <!-- Watchlist items will be injected here -->
+                        </div>
+                    </section>
+
                     <!-- Portfolio Tracker -->
                     <section id="portfolio" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                         <div class="flex items-center justify-between mb-4">
@@ -235,15 +250,34 @@
                         </div>
                     </section>
 
-                    <!-- Watchlist -->
-                    <section id="watchlist" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                        <h2 class="text-lg font-semibold mb-4">Watchlist</h2>
-                        <div class="space-y-4" id="watchlist-items">
-                            <!-- Watchlist items will be injected here -->
+                    <!-- Market Sentiment -->
+                    <section id="sentiment" class="space-y-6">
+                        <!-- Fear & Greed Index -->
+                        <div id="fear-greed-card" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                            <h2 class="text-lg font-semibold mb-4">Fear & Greed Index</h2>
+                            <div id="fear-greed-content" class="flex flex-col items-center justify-center py-4">
+                                <!-- Content will be injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Crypto Bubbles -->
+                        <div class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+                                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                                </div>
+                                <h2 class="text-lg font-semibold">Crypto Bubbles</h2>
+                            </div>
+                            <p class="text-sm text-slate-500 dark:text-dark-muted mb-6">
+                                Visualise the crypto market using interactive performance bubbles.
+                            </p>
+                            <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-dark-text font-bold py-3 rounded-lg transition-colors">
+                                Open Crypto Bubbles
+                            </a>
                         </div>
                     </section>
 
-                    <!-- News & Sentiment -->
+                    <!-- News -->
                     <section id="news" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold">Market News</h2>

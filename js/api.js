@@ -58,6 +58,12 @@ export const API = {
         }));
     },
 
+    async fetchFearAndGreed() {
+        const url = 'https://api.alternative.me/fng/';
+        const data = await this.fetchWithCache(url);
+        return data.data[0];
+    },
+
     formatTime(dateStr) {
         const date = new Date(dateStr);
         const now = new Date();
