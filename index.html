@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoDash - Interactive Cryptocurrency Dashboard</title>
+    <title>CryptoBlack - Advanced Cryptocurrency Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -28,6 +28,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
@@ -35,20 +36,73 @@
         }
         .chart-container {
             position: relative;
-            height: 300px;
+            height: 400px;
             width: 100%;
+            transition: height 0.3s ease;
+        }
+        @media (max-width: 1024px) {
+            .chart-container {
+                height: 320px;
+            }
+        }
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 220px;
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-dark-text transition-colors duration-200">
     <div id="app" class="min-h-screen">
+        <!-- Notifications Container -->
+        <div id="notifications" class="fixed bottom-4 right-4 z-[110] space-y-2 pointer-events-none"></div>
+
+        <!-- Portfolio Modal -->
+        <div id="portfolio-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border w-full max-w-md p-6 shadow-2xl" style="z-index: 101">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold">Add Asset</h3>
+                    <button id="close-modal-btn" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <form id="portfolio-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-dark-muted mb-1 uppercase">Select Coin</label>
+                        <select id="portfolio-coin-select" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                            <!-- Options will be injected here -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-dark-muted mb-1 uppercase">Quantity</label>
+                        <input type="number" id="portfolio-quantity" step="any" placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors mt-4">Add Transaction</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Global Stats Bar -->
         <header id="global-stats" class="border-b border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card sticky top-0 z-50">
             <div class="container mx-auto px-4 py-2 flex items-center justify-between text-xs font-medium">
                 <div class="flex items-center gap-6 overflow-x-auto whitespace-nowrap no-scrollbar">
                     <div class="flex gap-1.5">
                         <span class="text-slate-500 dark:text-dark-muted">Coins:</span>
-                        <span class="text-blue-600 dark:text-blue-400">12,483</span>
+                        <span class="text-blue-600 dark:text-blue-400">100</span>
                     </div>
                     <div class="flex gap-1.5">
                         <span class="text-slate-500 dark:text-dark-muted">Exchanges:</span>
@@ -85,7 +139,7 @@
 
         <main class="container mx-auto px-4 py-6">
             <!-- Header & Search -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 sticky top-[33px] z-40 bg-slate-50/80 dark:bg-dark-bg/80 backdrop-blur-md py-4">
                 <div>
                     <h1 class="text-2xl font-bold">Market Overview</h1>
                     <p class="text-slate-500 dark:text-dark-muted">Real-time crypto market data</p>
@@ -95,7 +149,7 @@
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
                         <input type="text" id="asset-search" placeholder="Search assets..." class="pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all w-full md:w-64">
                     </div>
-                    <button id="theme-toggle" class="p-2 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <button id="theme-toggle" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                         <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
                         <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
                     </button>
@@ -133,7 +187,7 @@
                             </div>
                         </div>
                         <div class="chart-container">
-                            <canvas id="main-chart"></canvas>
+                            <div id="tv-chart-widget" class="h-full w-full"></div>
                         </div>
                     </section>
 
@@ -156,14 +210,14 @@
                     <section id="portfolio" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold">Your Portfolio</h2>
-                            <button id="add-asset-btn" class="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                            <button id="add-asset-btn" class="p-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                             </button>
                         </div>
-                        <div class="text-3xl font-bold mb-1" id="portfolio-value">$12,450.80</div>
+                        <div class="text-3xl font-bold mb-1" id="portfolio-value">$0.00</div>
                         <div class="flex items-center gap-2 mb-6">
-                            <span class="text-sm font-medium text-green-500" id="portfolio-change">+$1,240 (11.2%)</span>
-                            <span class="text-xs text-slate-500 dark:text-dark-muted">Total Profit</span>
+                            <span class="text-sm font-medium text-green-500" id="portfolio-change">+$0 (0.00%)</span>
+                            <span class="text-xs text-slate-500 dark:text-dark-muted">24h Profit</span>
                         </div>
 
                         <div class="space-y-4" id="portfolio-items">
@@ -175,11 +229,8 @@
                                 <span class="text-slate-500 dark:text-dark-muted">Allocation</span>
                                 <span class="text-blue-600 dark:text-blue-400 font-medium">Diversified</span>
                             </div>
-                            <div class="flex h-2 rounded-full overflow-hidden">
-                                <div class="bg-orange-500" style="width: 45%"></div>
-                                <div class="bg-blue-500" style="width: 30%"></div>
-                                <div class="bg-emerald-500" style="width: 15%"></div>
-                                <div class="bg-slate-300 dark:bg-slate-700" style="width: 10%"></div>
+                            <div class="flex h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                <!-- Allocation bar items -->
                             </div>
                         </div>
                     </section>
@@ -196,7 +247,6 @@
                     <section id="news" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold">Market News</h2>
-                            <span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider">Bullish Sentiment</span>
                         </div>
                         <div class="space-y-4" id="news-items">
                             <!-- News items will be injected here -->
@@ -207,327 +257,6 @@
         </main>
     </div>
 
-    <script>
-        // Data Mocking
-        const COINS = [
-            { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 64125.40, change: 2.45, cap: '1.26T', vol: '32.1B', icon: 'bitcoin', color: 'text-orange-500' },
-            { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', price: 3452.10, change: -1.20, cap: '415B', vol: '15.4B', icon: 'zap', color: 'text-blue-500' },
-            { id: 'solana', name: 'Solana', symbol: 'SOL', price: 145.20, change: 8.32, cap: '64B', vol: '4.2B', icon: 'sun', color: 'text-emerald-500' },
-            { id: 'cardano', name: 'Cardano', symbol: 'ADA', price: 0.45, change: 0.15, cap: '16B', vol: '450M', icon: 'circle', color: 'text-blue-700' },
-            { id: 'ripple', name: 'Ripple', symbol: 'XRP', price: 0.62, change: -2.10, cap: '34B', vol: '1.2B', icon: 'droplet', color: 'text-slate-400' },
-            { id: 'polkadot', name: 'Polkadot', symbol: 'DOT', price: 7.20, change: 1.50, cap: '10B', vol: '210M', icon: 'layout-grid', color: 'text-pink-500' }
-        ];
-
-        const NEWS = [
-            { title: 'SEC Approves Spot Ethereum ETF', source: 'CoinDesk', time: '2h ago', sentiment: 'bullish' },
-            { title: 'Bitcoin Hashrate Reaches All-Time High', source: 'The Block', time: '5h ago', sentiment: 'neutral' },
-            { title: 'New Regulation Proposed for Stablecoins', source: 'Reuters', time: '8h ago', sentiment: 'bearish' }
-        ];
-
-        const PORTFOLIO = [
-            { id: 'bitcoin', amount: 0.15, value: 9618.81 },
-            { id: 'ethereum', amount: 0.8, value: 2761.68 },
-            { id: 'solana', amount: 5, value: 726.00 }
-        ];
-
-        // Initialization
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            renderMarketCards();
-            renderAssetTable();
-            renderPortfolio();
-            renderWatchlist();
-            renderNews();
-            initMainChart();
-            setupInteractivity();
-        });
-
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        themeToggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-        });
-
-        // Render Functions
-        function renderMarketCards() {
-            const container = document.getElementById('market-cards');
-            container.innerHTML = COINS.slice(0, 4).map(coin => `
-                <div class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
-                                <i data-lucide="${coin.icon}" class="w-6 h-6 ${coin.color}"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-sm">${coin.name}</h4>
-                                <span class="text-xs text-slate-500 dark:text-dark-muted">${coin.symbol}</span>
-                            </div>
-                        </div>
-                        <span class="text-xs font-bold ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'} bg-${coin.change >= 0 ? 'green' : 'red'}-50 dark:bg-${coin.change >= 0 ? 'green' : 'red'}-900/20 px-2 py-1 rounded">
-                            ${coin.change >= 0 ? '+' : ''}${coin.change}%
-                        </span>
-                    </div>
-                    <div class="text-xl font-bold mb-2">$${coin.price.toLocaleString()}</div>
-                    <div class="h-12 w-full">
-                        <canvas id="sparkline-${coin.id}"></canvas>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-            COINS.slice(0, 4).forEach(coin => renderSparkline(`sparkline-${coin.id}`, coin.change >= 0));
-        }
-
-        function renderAssetTable() {
-            const table = document.getElementById('asset-table');
-            table.innerHTML = `
-                <thead>
-                    <tr class="text-xs text-slate-500 dark:text-dark-muted border-b border-slate-200 dark:border-dark-border uppercase tracking-wider">
-                        <th class="px-6 py-4 font-semibold">Asset</th>
-                        <th class="px-6 py-4 font-semibold text-right">Price</th>
-                        <th class="px-6 py-4 font-semibold text-right">24h Change</th>
-                        <th class="px-6 py-4 font-semibold text-right">Market Cap</th>
-                        <th class="px-6 py-4 font-semibold text-right">Volume (24h)</th>
-                        <th class="px-6 py-4 font-semibold text-right">Last 7 Days</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-dark-border">
-                    ${COINS.map(coin => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                        <i data-lucide="${coin.icon}" class="w-4 h-4 ${coin.color}"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-sm">${coin.name}</div>
-                                        <div class="text-xs text-slate-500 dark:text-dark-muted uppercase">${coin.symbol}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-right font-medium text-sm">$${coin.price.toLocaleString()}</td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-sm font-semibold ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}">
-                                    ${coin.change >= 0 ? '+' : ''}${coin.change}%
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right text-sm text-slate-600 dark:text-dark-muted">$${coin.cap}</td>
-                            <td class="px-6 py-4 text-right text-sm text-slate-600 dark:text-dark-muted">$${coin.vol}</td>
-                            <td class="px-6 py-4">
-                                <div class="h-10 w-24 ml-auto">
-                                    <canvas id="table-spark-${coin.id}"></canvas>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            `;
-            lucide.createIcons();
-            COINS.forEach(coin => renderSparkline(`table-spark-${coin.id}`, coin.change >= 0));
-        }
-
-        function renderPortfolio() {
-            const container = document.getElementById('portfolio-items');
-            container.innerHTML = PORTFOLIO.map(item => {
-                const coin = COINS.find(c => c.id === item.id);
-                return `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="${coin.icon}" class="w-4 h-4 ${coin.color}"></i>
-                            <div>
-                                <div class="text-sm font-bold">${coin.symbol}</div>
-                                <div class="text-xs text-slate-500 dark:text-dark-muted">${item.amount} ${coin.symbol}</div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm font-bold">$${item.value.toLocaleString()}</div>
-                            <div class="text-[10px] text-green-500">+4.2%</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            lucide.createIcons();
-        }
-
-        function renderWatchlist() {
-            const container = document.getElementById('watchlist-items');
-            container.innerHTML = COINS.slice(0, 3).map(coin => `
-                <div class="flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="star" class="w-4 h-4 text-amber-400 fill-amber-400"></i>
-                        <div>
-                            <div class="text-sm font-bold">${coin.name}</div>
-                            <div class="text-xs text-slate-500 dark:text-dark-muted">$${coin.price.toLocaleString()}</div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-semibold ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}">
-                            ${coin.change >= 0 ? '+' : ''}${coin.change}%
-                        </span>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function renderNews() {
-            const container = document.getElementById('news-items');
-            container.innerHTML = NEWS.map(item => `
-                <div class="group cursor-pointer">
-                    <div class="text-xs text-slate-500 dark:text-dark-muted mb-1 flex items-center justify-between">
-                        <span>${item.source} • ${item.time}</span>
-                        <span class="w-2 h-2 rounded-full ${item.sentiment === 'bullish' ? 'bg-green-500' : item.sentiment === 'bearish' ? 'bg-red-500' : 'bg-slate-400'}"></span>
-                    </div>
-                    <h4 class="text-sm font-medium group-hover:text-blue-500 transition-colors line-clamp-2">${item.title}</h4>
-                </div>
-            `).join('');
-        }
-
-        function renderSparkline(canvasId, isPositive) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const data = Array.from({ length: 10 }, () => Math.random() * 100);
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map((_, i) => i),
-                    datasets: [{
-                        data: data,
-                        borderColor: isPositive ? '#22c55e' : '#ef4444',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 0,
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: { x: { display: false }, y: { display: false } }
-                }
-            });
-        }
-
-        function initMainChart() {
-            const ctx = document.getElementById('main-chart').getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
-
-            window.mainChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-                    datasets: [{
-                        label: 'Price',
-                        data: Array.from({ length: 24 }, () => 62000 + Math.random() * 3000),
-                        borderColor: '#3b82f6',
-                        backgroundColor: gradient,
-                        fill: true,
-                        borderWidth: 3,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#3b82f6',
-                        pointHoverBorderColor: '#fff',
-                        pointHoverBorderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                            padding: 12,
-                            titleFont: { size: 12, weight: 'bold' },
-                            bodyFont: { size: 14 },
-                            callbacks: {
-                                label: (context) => `$${context.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { maxTicksLimit: 8, color: '#94a3b8', font: { size: 11 } }
-                        },
-                        y: {
-                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
-                            ticks: {
-                                color: '#94a3b8',
-                                font: { size: 11 },
-                                callback: (value) => '$' + value.toLocaleString()
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function setupInteractivity() {
-            // Asset Search
-            const searchInput = document.getElementById('asset-search');
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#asset-table tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(query) ? '' : 'none';
-                });
-            });
-
-            // Timeframe Buttons
-            const buttons = document.querySelectorAll('.timeframe-btn');
-            buttons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    buttons.forEach(b => b.classList.remove('bg-white', 'dark:bg-dark-card', 'shadow-sm'));
-                    btn.classList.add('bg-white', 'dark:bg-dark-card', 'shadow-sm');
-
-                    // Simulate data update
-                    const newData = Array.from({ length: 24 }, () => 62000 + Math.random() * 4000);
-                    window.mainChart.data.datasets[0].data = newData;
-                    window.mainChart.update();
-                });
-            });
-
-            // Sorting Logic
-            const tableHeaders = document.querySelectorAll('#asset-table th');
-            tableHeaders.forEach((th, index) => {
-                if (index < 5) { // Skip sparkline column
-                    th.classList.add('cursor-pointer', 'hover:text-blue-500');
-                    th.addEventListener('click', () => sortTable(index));
-                }
-            });
-
-            // Simple Portfolio "Add" Simulation
-            document.getElementById('add-asset-btn').addEventListener('click', () => {
-                const randomCoin = COINS[Math.floor(Math.random() * COINS.length)];
-                PORTFOLIO.push({ id: randomCoin.id, amount: 1, value: randomCoin.price });
-                renderPortfolio();
-                alert(`Added 1 ${randomCoin.symbol} to portfolio!`);
-            });
-        }
-
-        let sortOrder = 1;
-        function sortTable(columnIndex) {
-            const tbody = document.querySelector('#asset-table tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-
-            sortOrder *= -1;
-
-            rows.sort((a, b) => {
-                let aVal = a.children[columnIndex].innerText.replace(/[\$,%]/g, '');
-                let bVal = b.children[columnIndex].innerText.replace(/[\$,%]/g, '');
-
-                if (!isNaN(parseFloat(aVal))) {
-                    return (parseFloat(aVal) - parseFloat(bVal)) * sortOrder;
-                }
-                return aVal.localeCompare(bVal) * sortOrder;
-            });
-
-            rows.forEach(row => tbody.appendChild(row));
-        }
-    </script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
