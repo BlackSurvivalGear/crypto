@@ -562,14 +562,14 @@ export const UI = {
                                 usePointStyle: true,
                                 padding: 20,
                                 font: { size: 11, weight: '600' },
-                                color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
+                                color: document.documentElement.classList.contains('dark') ? '#9CA3AF' : '#64748b'
                             }
                         },
                         tooltip: {
-                            backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                            titleColor: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
-                            bodyColor: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b',
-                            borderColor: 'rgba(255,255,255,0.1)',
+                            backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff',
+                            titleColor: document.documentElement.classList.contains('dark') ? '#FFFFFF' : '#1e293b',
+                            bodyColor: document.documentElement.classList.contains('dark') ? '#9CA3AF' : '#64748b',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
                             borderWidth: 1,
                             padding: 12,
                             boxPadding: 6,
@@ -627,16 +627,16 @@ export const UI = {
                     },
                     scales: {
                         x: {
-                            grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                            grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' },
                             ticks: {
-                                color: '#94a3b8',
+                                color: '#9CA3AF',
                                 font: { size: 10 },
                                 callback: (val) => '$' + UI.formatNumber(val)
                             }
                         },
                         y: {
                             grid: { display: false },
-                            ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+                            ticks: { color: '#9CA3AF', font: { size: 11, weight: '600' } }
                         }
                     }
                 }
@@ -689,10 +689,10 @@ export const UI = {
                         mode: 'index',
                         intersect: false,
                         padding: 12,
-                        backgroundColor: isDark ? '#1e293b' : '#fff',
-                        titleColor: isDark ? '#f8fafc' : '#1e293b',
-                        bodyColor: isDark ? '#94a3b8' : '#64748b',
-                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                        backgroundColor: isDark ? '#111827' : '#fff',
+                        titleColor: isDark ? '#FFFFFF' : '#1e293b',
+                        bodyColor: isDark ? '#9CA3AF' : '#64748b',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
                         borderWidth: 1,
                         callbacks: {
                             label: (context) => {
@@ -708,7 +708,7 @@ export const UI = {
                     x: {
                         grid: { display: false },
                         ticks: {
-                            color: '#94a3b8',
+                            color: '#9CA3AF',
                             font: { size: 10 },
                             maxRotation: 0,
                             autoSkip: true,
@@ -716,9 +716,9 @@ export const UI = {
                         }
                     },
                     y: {
-                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                        grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' },
                         ticks: {
-                            color: '#94a3b8',
+                            color: '#9CA3AF',
                             font: { size: 10 },
                             callback: (val) => '$' + UI.formatNumber(val)
                         }
@@ -740,12 +740,12 @@ export const UI = {
                     </div>
                     <div>
                         <div class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Top Winner</div>
-                        <div class="font-bold text-sm">${best.name}</div>
+                        <div class="font-bold text-sm text-white">${best.name}</div>
                     </div>
                 </div>
                 <div class="text-right">
                     <div class="text-sm font-black text-emerald-500">+${best.performance.toFixed(2)}%</div>
-                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ROI</div>
+                    <div class="text-[10px] text-dark-muted font-bold uppercase tracking-widest">ROI</div>
                 </div>
             `;
         }
@@ -758,12 +758,12 @@ export const UI = {
                     </div>
                     <div>
                         <div class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Biggest Loser</div>
-                        <div class="font-bold text-sm">${worst.name}</div>
+                        <div class="font-bold text-sm text-white">${worst.name}</div>
                     </div>
                 </div>
                 <div class="text-right">
                     <div class="text-sm font-black text-red-500">${worst.performance.toFixed(2)}%</div>
-                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ROI</div>
+                    <div class="text-[10px] text-dark-muted font-bold uppercase tracking-widest">ROI</div>
                 </div>
             `;
         }
@@ -832,6 +832,7 @@ export const UI = {
         if (this.riskChartInstance) {
             this.riskChartInstance.data.datasets[0].data = [score, 100 - score];
             this.riskChartInstance.data.datasets[0].backgroundColor[0] = color;
+            this.riskChartInstance.data.datasets[0].backgroundColor[1] = document.documentElement.classList.contains('dark') ? '#151B26' : '#f1f3f6';
             this.riskChartInstance.update();
         } else {
             this.riskChartInstance = new Chart(canvas.getContext('2d'), {
@@ -839,7 +840,7 @@ export const UI = {
                 data: {
                     datasets: [{
                         data: [score, 100 - score],
-                        backgroundColor: [color, document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f3f6'],
+                        backgroundColor: [color, document.documentElement.classList.contains('dark') ? '#151B26' : '#f1f3f6'],
                         borderWidth: 0,
                         circumference: 270,
                         rotation: 225,
@@ -921,7 +922,7 @@ export const UI = {
                             usePointStyle: true,
                             padding: 15,
                             font: { size: 10, weight: '600' },
-                            color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
+                            color: document.documentElement.classList.contains('dark') ? '#9CA3AF' : '#64748b'
                         }
                     },
                     tooltip: {
@@ -1028,13 +1029,13 @@ export const UI = {
             </thead>
             <tbody class="divide-y divide-slate-50 dark:divide-dark-border/50">
                 ${filteredData.map(item => `
-                    <tr class="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr class="group hover:bg-slate-50/50 dark:hover:bg-dark-cardSecondary/30 transition-colors">
                         <td>
                             <div class="flex items-center gap-3">
                                 <img src="${item.coin.image}" class="w-8 h-8 rounded-full">
                                 <div>
                                     <div class="font-bold text-slate-900 dark:text-white">${item.coin.name}</div>
-                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${item.coin.symbol}</div>
+                                    <div class="text-[10px] text-dark-muted font-bold uppercase tracking-wider">${item.coin.symbol}</div>
                                 </div>
                             </div>
                         </td>
@@ -1046,15 +1047,15 @@ export const UI = {
                         </td>
                         <td class="text-right">
                             <div class="font-bold">${item.amount.toLocaleString()} ${item.coin.symbol}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quantity</div>
+                            <div class="text-[10px] text-dark-muted font-bold uppercase tracking-wider">Quantity</div>
                         </td>
                         <td class="text-right">
                             <div class="font-bold">$${item.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">$${item.buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} avg</div>
+                            <div class="text-[10px] text-dark-muted font-bold uppercase tracking-wider">$${item.buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} avg</div>
                         </td>
                         <td class="text-right">
                             <div class="font-bold">$${item.currentValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Current Value</div>
+                            <div class="text-[10px] text-dark-muted font-bold uppercase tracking-wider">Current Value</div>
                         </td>
                         <td class="text-right">
                             <div class="font-bold ${item.profit >= 0 ? 'text-green-500' : 'text-red-500'}">
@@ -1066,16 +1067,16 @@ export const UI = {
                         </td>
                         <td class="text-right">
                             <div class="font-bold">${item.allocation.toFixed(2)}%</div>
-                            <div class="w-16 h-1 bg-slate-100 dark:bg-slate-800 rounded-full ml-auto mt-1 overflow-hidden">
+                            <div class="w-16 h-1 bg-slate-100 dark:bg-dark-cardSecondary rounded-full ml-auto mt-1 overflow-hidden">
                                 <div class="h-full bg-blue-500" style="width: ${item.allocation}%"></div>
                             </div>
                         </td>
                         <td class="text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button class="edit-asset-btn p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 transition-all" data-id="${item.id}">
+                                <button class="edit-asset-btn p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-dark-muted hover:text-blue-500 transition-all" data-id="${item.id}">
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
-                                <button class="delete-asset-btn p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-all" data-id="${item.id}">
+                                <button class="delete-asset-btn p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-dark-muted hover:text-red-500 transition-all" data-id="${item.id}">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -1144,16 +1145,15 @@ export const UI = {
         const roi = unrealizedPLPct;
 
         const stats = [
-            { id: 'stat-total-value', label: 'Total Value', value: totalValue, prefix: '$', color: '' },
+            { id: 'stat-total-value', label: 'Total Value', value: totalValue, prefix: '$', color: 'text-white' },
             { id: 'stat-cost-basis', label: 'Total Cost Basis', value: totalCost, prefix: '$', color: 'text-slate-400' },
             { id: 'stat-unrealized-pl', label: 'Unrealized P/L', value: unrealizedPL, prefix: unrealizedPL >= 0 ? '+$' : '-$', color: unrealizedPL >= 0 ? 'text-green-500' : 'text-red-500', absolute: true },
             { id: 'stat-roi', label: 'ROI %', value: roi, suffix: '%', color: roi >= 0 ? 'text-green-500' : 'text-red-500' },
-            { id: 'stat-today-pl', label: 'Today\'s P/L', value: totalChange24h, prefix: totalChange24h >= 0 ? '+$' : '-$', color: totalChange24h >= 0 ? 'text-green-500' : 'text-red-500', absolute: true },
-            { id: 'stat-holdings', label: 'Holdings', value: portfolioItems.length, suffix: ' Assets', color: 'text-blue-500', decimals: 0 }
+            { id: 'stat-today-pl', label: 'Today\'s P/L', value: totalChange24h, prefix: totalChange24h >= 0 ? '+$' : '-$', color: totalChange24h >= 0 ? 'text-green-500' : 'text-red-500', absolute: true }
         ];
 
         statsGrid.innerHTML = stats.map(stat => `
-            <div class="bg-white/50 dark:bg-dark-card/50 backdrop-blur-md rounded-[20px] p-6 border border-white/10 dark:border-dark-border shadow-sm hover:scale-[1.02] transition-transform">
+            <div class="bg-white/50 dark:bg-dark-cardSecondary/50 glass-inner-highlight backdrop-blur-md rounded-[20px] p-6 border border-white/10 dark:border-dark-border shadow-sm hover:scale-[1.02] transition-transform">
                 <p class="text-[10px] font-bold text-slate-500 dark:text-dark-muted uppercase tracking-[0.15em] mb-2">${stat.label}</p>
                 <div class="flex items-baseline gap-1">
                     <span id="${stat.id}" class="text-xl font-black ${stat.color}">--</span>
