@@ -161,41 +161,118 @@
         <!-- Portfolio Slide-in Panel -->
         <div id="portfolio-panel-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[110] opacity-0 pointer-events-none transition-opacity duration-300"></div>
         <div id="portfolio-panel" class="fixed top-0 right-0 h-full w-full max-w-4xl bg-white dark:bg-dark-bg border-l border-slate-200 dark:border-dark-border z-[120] translate-x-full transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col shadow-2xl">
-            <!-- Panel Header -->
-            <header class="p-6 border-b border-slate-200 dark:border-dark-border sticky top-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-md z-20 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">Portfolio Manager</h2>
-                    <p class="text-sm text-slate-500 dark:text-dark-muted">Track performance and manage holdings</p>
+            <!-- Panel Header & Sticky Stats -->
+            <div class="sticky top-0 z-30 bg-white/95 dark:bg-dark-bg/95 backdrop-blur-md border-b border-slate-200 dark:border-dark-border">
+                <header class="p-6 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold">Portfolio Manager</h2>
+                        <p class="text-sm text-slate-500 dark:text-dark-muted">Premium analytics & performance tracking</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="add-asset-panel-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Add Asset</span>
+                        </button>
+                        <button id="close-panel-btn" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Quick Statistics Horizontal Scroll -->
+                <div class="px-6 pb-6 overflow-x-auto no-scrollbar">
+                    <div id="panel-stats-grid" class="flex gap-4 min-w-max">
+                        <!-- Stats will be injected here with animated counters -->
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button id="add-asset-panel-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>Add Asset</span>
-                    </button>
-                    <button id="close-panel-btn" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-            </header>
+            </div>
 
             <!-- Panel Content -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-10 no-scrollbar pb-20">
-                <!-- Portfolio Overview Stats -->
-                <div id="panel-stats-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Stats will be injected here -->
-                </div>
-
-                <!-- Portfolio Performance Charts -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-6 border border-slate-200 dark:border-dark-border">
-                        <h3 class="text-xs font-bold mb-6 uppercase tracking-widest text-slate-500 dark:text-dark-muted">Asset Allocation</h3>
-                        <div class="h-64 flex items-center justify-center">
-                            <canvas id="allocation-chart"></canvas>
+            <div class="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar pb-20">
+                <!-- Main Portfolio Performance Chart -->
+                <section class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
+                    <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Portfolio Performance</h3>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
+                    </button>
+                    <div class="px-6 pb-6 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <div></div>
+                        <div class="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-lg self-start w-fit">
+                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="24H">24H</button>
+                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="7D">7D</button>
+                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors bg-white dark:bg-dark-bg shadow-sm" data-time="30D">30D</button>
+                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="90D">90D</button>
+                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="1Y">1Y</button>
+                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="ALL">ALL</button>
                         </div>
                     </div>
+                        <div class="h-72 w-full">
+                            <canvas id="portfolio-performance-chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Top Winners & Losers -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted px-2">Top Performers</h3>
+                        <div id="top-winner-card" class="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between">
+                            <!-- Injected -->
+                        </div>
+                        <div id="biggest-loser-card" class="bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 rounded-2xl p-4 flex items-center justify-between">
+                            <!-- Injected -->
+                        </div>
+                    </div>
+
+                    <!-- Risk Meter -->
                     <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-6 border border-slate-200 dark:border-dark-border">
-                        <h3 class="text-xs font-bold mb-6 uppercase tracking-widest text-slate-500 dark:text-dark-muted">Profit / Loss Distribution</h3>
-                        <div class="h-64 flex items-center justify-center">
+                        <h3 class="text-xs font-bold mb-6 uppercase tracking-widest text-slate-500 dark:text-dark-muted">Portfolio Risk</h3>
+                        <div id="risk-meter-container" class="flex flex-col items-center">
+                            <div class="relative w-32 h-32 mb-4">
+                                <canvas id="risk-gauge"></canvas>
+                                <div id="risk-value" class="absolute inset-0 flex items-center justify-center text-2xl font-black">--</div>
+                            </div>
+                            <div id="risk-label" class="font-bold text-lg mb-2">Analyzing...</div>
+                            <p id="risk-desc" class="text-xs text-slate-500 dark:text-dark-muted text-center leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allocation Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
+                        <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Asset Allocation</h3>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
+                        </button>
+                        <div class="px-6 pb-6">
+                            <div class="h-64">
+                                <canvas id="allocation-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
+                        <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Sector Allocation</h3>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
+                        </button>
+                        <div class="px-6 pb-6">
+                            <div class="h-64">
+                                <canvas id="sector-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profit & Loss Ranking -->
+                <div class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
+                    <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Asset Profit / Loss Ranking</h3>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
+                    </button>
+                    <div class="px-6 pb-6">
+                        <div class="h-80">
                             <canvas id="pl-chart"></canvas>
                         </div>
                     </div>
@@ -353,9 +430,24 @@
                                 <div id="watchlist-search-results" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-lg shadow-xl z-[60] hidden max-h-48 overflow-y-auto no-scrollbar"></div>
                             </div>
                         </div>
-                        <div class="space-y-4" id="watchlist-items">
+                        <div class="space-y-4 mb-6" id="watchlist-items">
                             <!-- Watchlist items will be injected here -->
                         </div>
+
+                        <!-- Crypto Bubbles Quick Access -->
+                        <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer"
+                           class="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/25 group">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="text-sm">Open Crypto Bubbles</div>
+                                    <div class="text-[10px] font-normal opacity-80">Interactive market visualization</div>
+                                </div>
+                            </div>
+                            <i data-lucide="external-link" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
                     </section>
 
                     <!-- Portfolio Tracker -->
@@ -414,21 +506,6 @@
                             </div>
                         </div>
 
-                        <!-- Crypto Bubbles -->
-                        <div class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-500">
-                                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
-                                </div>
-                                <h2 class="text-lg font-semibold">Crypto Bubbles</h2>
-                            </div>
-                            <p class="text-sm text-slate-500 dark:text-dark-muted mb-6">
-                                Visualise the crypto market using interactive performance bubbles.
-                            </p>
-                            <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-dark-text font-bold py-3 rounded-lg transition-colors">
-                                Open Crypto Bubbles
-                            </a>
-                        </div>
                     </section>
 
                     <!-- News -->

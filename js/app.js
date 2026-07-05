@@ -52,6 +52,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 60 * 1000); // 60 seconds
 });
 
+async function updatePortfolioPerformance(portfolio, days = 30) {
+    try {
+        if (portfolio.length === 0) return;
+
+        // Fetch historical data for each asset
+        const historicalPromises = portfolio.map(item => API.fetchCoinChart(item.id, days));
+        const historicalResults = await Promise.all(historicalPromises);
+
+        // Aggregate daily values
+        // Note: CoinGecko returns data in [timestamp, price] format
+        const minPoints = Math.min(...historicalResults.map(res => res.prices.length));
+
+        const aggregatedHistory = [];
+        for (let i = 0; i < minPoints; i++) {
+            let dailyTotal = 0;
+            let timestamp = historicalResults[0].prices[i][0];
+
+            portfolio.forEach((item, index) => {
+                const priceAtTime = historicalResults[index].prices[i][1];
+                dailyTotal += priceAtTime * item.amount;
+            });
+
+            aggregatedHistory.push({
+                date: new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                value: dailyTotal
+            });
+        }
+
+        UI.renderPerformanceChart(aggregatedHistory);
+    } catch (error) {
+        console.error('Failed to update portfolio performance:', error);
+    }
+}
+
 async function loadDashboardData() {
     try {
         const searchInput = document.getElementById('asset-search');
@@ -102,6 +136,7 @@ async function loadDashboardData() {
 
         if (document.body.classList.contains('panel-open')) {
             UI.renderPortfolioPanel(portfolio, allCoins);
+            await updatePortfolioPerformance(portfolio);
         }
 
         updateGlobalStats(allCoins);
@@ -212,7 +247,9 @@ function setupInteractivity() {
 
     const openPortfolioPanel = () => {
         document.body.classList.add('panel-open');
-        UI.renderPortfolioPanel(Store.getPortfolio(), allCoins);
+        const portfolio = Store.getPortfolio();
+        UI.renderPortfolioPanel(portfolio, allCoins);
+        updatePortfolioPerformance(portfolio);
     };
 
     const closePortfolioPanel = () => {
@@ -223,6 +260,20 @@ function setupInteractivity() {
     if (managePortfolioBtn) managePortfolioBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         openPortfolioPanel();
+    });
+
+    // Portfolio Timeframe Buttons
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.portfolio-timeframe-btn');
+        if (btn) {
+            const timeframe = btn.dataset.time;
+            const buttons = document.querySelectorAll('.portfolio-timeframe-btn');
+            buttons.forEach(b => b.classList.remove('bg-white', 'dark:bg-dark-bg', 'shadow-sm'));
+            btn.classList.add('bg-white', 'dark:bg-dark-bg', 'shadow-sm');
+
+            const dayMap = { '24H': 1, '7D': 7, '30D': 30, '90D': 90, '1Y': 365, 'ALL': 'max' };
+            await updatePortfolioPerformance(Store.getPortfolio(), dayMap[timeframe] || 30);
+        }
     });
 
     const closePanelBtn = document.getElementById('close-panel-btn');
@@ -473,6 +524,7 @@ function setupInteractivity() {
                 });
                 UI.renderPortfolio(portfolio, allCoins);
                 UI.renderPortfolioPanel(portfolio, allCoins);
+                updatePortfolioPerformance(portfolio);
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 portfolioForm.reset();

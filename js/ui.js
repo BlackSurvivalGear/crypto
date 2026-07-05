@@ -522,7 +522,8 @@ export const UI = {
             if (!coin) return null;
             const currentValue = item.amount * coin.price;
             const profit = currentValue - (item.amount * item.buyPrice);
-            return { symbol: coin.symbol, value: currentValue, profit, name: coin.name };
+            const profitPct = (item.amount * item.buyPrice) > 0 ? (profit / (item.amount * item.buyPrice)) * 100 : 0;
+            return { symbol: coin.symbol, value: currentValue, profit, profitPct, name: coin.name, image: coin.image };
         }).filter(Boolean).sort((a, b) => b.value - a.value);
 
         if (this.allocationChartInstance) this.allocationChartInstance.destroy();
@@ -539,28 +540,39 @@ export const UI = {
                     data: data.map(d => d.value),
                     backgroundColor: colors,
                     borderWidth: 0,
-                    hoverOffset: 10
+                    hoverOffset: 15
                 }]
             },
             options: {
                 maintainAspectRatio: false,
-                cutout: '70%',
+                cutout: '75%',
                 plugins: {
                     legend: {
                         position: 'right',
                         labels: {
                             usePointStyle: true,
-                            padding: 15,
-                            font: { size: 10, weight: 'bold' },
+                            padding: 20,
+                            font: { size: 11, weight: '600' },
                             color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
                         }
                     },
                     tooltip: {
+                        backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                        titleColor: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
+                        bodyColor: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
                         callbacks: {
                             label: (context) => {
-                                const val = context.raw;
-                                const pct = (val / totalValue) * 100;
-                                return ` $${val.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${pct.toFixed(1)}%)`;
+                                const d = data[context.dataIndex];
+                                const pct = (d.value / totalValue) * 100;
+                                return [
+                                    ` Value: $${d.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                                    ` Allocation: ${pct.toFixed(1)}%`,
+                                    ` P/L: ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                ];
                             }
                         }
                     }
@@ -568,15 +580,82 @@ export const UI = {
             }
         });
 
-        // Profit/Loss Bar Chart
+        // Profit/Loss Bar Chart (Horizontal)
+        const plSortedData = [...data].sort((a, b) => b.profit - a.profit);
         this.plChartInstance = new Chart(plCanvas.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: data.map(d => d.symbol),
+                labels: plSortedData.map(d => d.symbol),
                 datasets: [{
-                    data: data.map(d => d.profit),
-                    backgroundColor: data.map(d => d.profit >= 0 ? '#10b981' : '#ef4444'),
-                    borderRadius: 6
+                    data: plSortedData.map(d => d.profit),
+                    backgroundColor: plSortedData.map(d => d.profit >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                    borderColor: plSortedData.map(d => d.profit >= 0 ? '#10b981' : '#ef4444'),
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const d = plSortedData[context.dataIndex];
+                                return ` ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${d.profitPct.toFixed(2)}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 10 },
+                            callback: (val) => '$' + UI.formatNumber(val)
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+                    }
+                }
+            }
+        });
+    },
+
+    renderPerformanceChart(historyData) {
+        const canvas = document.getElementById('portfolio-performance-chart');
+        if (!canvas) return;
+
+        if (this.performanceChartInstance) this.performanceChartInstance.destroy();
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        this.performanceChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: historyData.map(d => d.date),
+                datasets: [{
+                    label: 'Portfolio Value',
+                    data: historyData.map(d => d.value),
+                    borderColor: '#3b82f6',
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#3b82f6',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2,
                 }]
             },
             options: {
@@ -584,19 +663,241 @@ export const UI = {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        padding: 12,
+                        backgroundColor: isDark ? '#1e293b' : '#fff',
+                        titleColor: isDark ? '#f8fafc' : '#1e293b',
+                        bodyColor: isDark ? '#94a3b8' : '#64748b',
+                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                        borderWidth: 1,
                         callbacks: {
-                            label: (context) => ` ${context.raw >= 0 ? '+' : ''}$${context.raw.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                            label: (context) => {
+                                let label = ` Value: $${context.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+                                const firstVal = historyData[0].value;
+                                const change = ((context.parsed.y - firstVal) / firstVal) * 100;
+                                return [label, ` Total Return: ${change >= 0 ? '+' : ''}${change.toFixed(2)}%` ];
+                            }
                         }
                     }
                 },
                 scales: {
-                    y: {
-                        grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-                        ticks: { color: '#94a3b8', font: { size: 10 } }
-                    },
                     x: {
                         grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } }
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 10 },
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 8
+                        }
+                    },
+                    y: {
+                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 10 },
+                            callback: (val) => '$' + UI.formatNumber(val)
+                        }
+                    }
+                }
+            }
+        });
+    },
+
+    renderTopPerformers(best, worst) {
+        const winnerCard = document.getElementById('top-winner-card');
+        const loserCard = document.getElementById('biggest-loser-card');
+
+        if (winnerCard) {
+            winnerCard.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-emerald-500/20 rounded-xl">
+                        <img src="${best.image}" class="w-8 h-8 rounded-full">
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Top Winner</div>
+                        <div class="font-bold text-sm">${best.name}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-black text-emerald-500">+${best.performance.toFixed(2)}%</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ROI</div>
+                </div>
+            `;
+        }
+
+        if (loserCard) {
+            loserCard.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-red-500/20 rounded-xl">
+                        <img src="${worst.image}" class="w-8 h-8 rounded-full">
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Biggest Loser</div>
+                        <div class="font-bold text-sm">${worst.name}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-black text-red-500">${worst.performance.toFixed(2)}%</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ROI</div>
+                </div>
+            `;
+        }
+    },
+
+    renderRiskMeter(portfolioItems, allCoins, totalValue) {
+        const canvas = document.getElementById('risk-gauge');
+        const valueEl = document.getElementById('risk-value');
+        const labelEl = document.getElementById('risk-label');
+        const descEl = document.getElementById('risk-desc');
+        if (!canvas || !valueEl) return;
+
+        // Risk calculation factors
+        let score = 50; // Base score
+
+        // 1. Concentration risk (Largest holding %)
+        const sorted = portfolioItems.map(item => {
+            const coin = allCoins.find(c => c.id === item.id);
+            return (coin ? coin.price : 0) * item.amount;
+        }).sort((a, b) => b - a);
+
+        const largestPct = totalValue > 0 ? (sorted[0] / totalValue) * 100 : 0;
+        if (largestPct > 50) score += 20;
+        else if (largestPct > 30) score += 10;
+        else if (largestPct < 15) score -= 10;
+
+        // 2. Diversification
+        if (portfolioItems.length > 8) score -= 15;
+        else if (portfolioItems.length < 3) score += 10;
+
+        // 3. Stablecoin exposure (reduction in risk)
+        const stablecoins = ['tether', 'usd-coin', 'dai', 'binance-usd'];
+        const stableValue = portfolioItems.reduce((sum, item) => {
+            if (stablecoins.includes(item.id)) {
+                const coin = allCoins.find(c => c.id === item.id);
+                return sum + (coin ? coin.price : 0) * item.amount;
+            }
+            return sum;
+        }, 0);
+        const stablePct = totalValue > 0 ? (stableValue / totalValue) * 100 : 0;
+        score -= (stablePct / 2);
+
+        // Clamp score 0-100
+        score = Math.max(10, Math.min(95, score));
+
+        let rating = 'Medium Risk';
+        let color = '#f59e0b';
+        let desc = 'Your portfolio has a balanced mix of assets. Diversification looks healthy, but maintain caution with market volatility.';
+
+        if (score < 35) {
+            rating = 'Low Risk';
+            color = '#10b981';
+            desc = 'Conservative allocation with good diversification or high stablecoin exposure. Well-positioned for market downturns.';
+        } else if (score > 70) {
+            rating = 'High Risk';
+            color = '#ef4444';
+            desc = 'Highly concentrated or volatile assets. Small market movements could significantly impact your total portfolio value.';
+        }
+
+        valueEl.innerText = Math.round(score);
+        valueEl.style.color = color;
+        labelEl.innerText = rating;
+        labelEl.style.color = color;
+        descEl.innerText = desc;
+
+        if (this.riskChartInstance) this.riskChartInstance.destroy();
+        this.riskChartInstance = new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [score, 100 - score],
+                    backgroundColor: [color, document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f3f6'],
+                    borderWidth: 0,
+                    circumference: 270,
+                    rotation: 225,
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '85%',
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+    },
+
+    renderSectorAllocation(portfolioItems, allCoins, totalValue) {
+        const canvas = document.getElementById('sector-chart');
+        if (!canvas) return;
+
+        // Sector mapping logic (can be expanded)
+        const sectorMap = {
+            'bitcoin': 'Layer 1',
+            'ethereum': 'Layer 1',
+            'solana': 'Layer 1',
+            'cardano': 'Layer 1',
+            'polkadot': 'Layer 1',
+            'ripple': 'Payment',
+            'dogecoin': 'Meme',
+            'shiba-inu': 'Meme',
+            'pepe': 'Meme',
+            'uniswap': 'DeFi',
+            'aave': 'DeFi',
+            'chainlink': 'Oracle',
+            'render-token': 'AI',
+            'fetch-ai': 'AI',
+            'tether': 'Stablecoin',
+            'usd-coin': 'Stablecoin'
+        };
+
+        const sectors = {};
+        portfolioItems.forEach(item => {
+            const coin = allCoins.find(c => c.id === item.id);
+            if (!coin) return;
+            const sector = sectorMap[coin.id] || 'Other';
+            const value = coin.price * item.amount;
+            if (!sectors[sector]) sectors[sector] = { value: 0, count: 0 };
+            sectors[sector].value += value;
+            sectors[sector].count += 1;
+        });
+
+        const data = Object.entries(sectors)
+            .map(([name, info]) => ({ name, value: info.value, count: info.count, pct: (info.value / totalValue) * 100 }))
+            .sort((a, b) => b.value - a.value);
+
+        if (this.sectorChartInstance) this.sectorChartInstance.destroy();
+
+        this.sectorChartInstance = new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.name),
+                datasets: [{
+                    data: data.map(d => d.value),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#94a3b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 10, weight: '600' },
+                            color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const d = data[context.dataIndex];
+                                return ` $${d.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${d.pct.toFixed(1)}%) • ${d.count} Assets`;
+                            }
+                        }
                     }
                 }
             }
@@ -753,6 +1054,23 @@ export const UI = {
         lucide.createIcons();
     },
 
+    animateValue(id, start, end, duration, prefix = '', suffix = '', decimals = 2) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = progress * (end - start) + start;
+            obj.innerHTML = prefix + value.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    },
+
     renderPortfolioPanel(portfolioItems, allCoins) {
         const statsGrid = document.getElementById('panel-stats-grid');
         const holdingsCount = document.getElementById('holdings-count');
@@ -764,8 +1082,8 @@ export const UI = {
         let totalValue = 0;
         let totalCost = 0;
         let totalChange24h = 0;
-        let bestAsset = { id: '', performance: -Infinity };
-        let worstAsset = { id: '', performance: Infinity };
+        let bestAsset = { id: '', name: '', performance: -Infinity, image: '' };
+        let worstAsset = { id: '', name: '', performance: Infinity, image: '' };
 
         portfolioItems.forEach(item => {
             const coin = allCoins.find(c => c.id === item.id);
@@ -781,36 +1099,40 @@ export const UI = {
             totalChange24h += (coin.price_change_24h || 0) * item.amount;
 
             if (itemPerformance > bestAsset.performance) {
-                bestAsset = { id: coin.name, performance: itemPerformance };
+                bestAsset = { id: coin.id, name: coin.name, performance: itemPerformance, image: coin.image };
             }
             if (itemPerformance < worstAsset.performance) {
-                worstAsset = { id: coin.name, performance: itemPerformance };
+                worstAsset = { id: coin.id, name: coin.name, performance: itemPerformance, image: coin.image };
             }
         });
 
         const unrealizedPL = totalValue - totalCost;
         const unrealizedPLPct = totalCost > 0 ? (unrealizedPL / totalCost) * 100 : 0;
+        const roi = unrealizedPLPct;
 
         const stats = [
-            { label: 'Total Value', value: `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: '', color: '' },
-            { label: 'Total Cost Basis', value: `$${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: '', color: 'text-slate-400' },
-            { label: 'Unrealized P/L', value: `${unrealizedPL >= 0 ? '+' : '-'}$${Math.abs(unrealizedPL).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: `${unrealizedPLPct.toFixed(2)}%`, color: unrealizedPL >= 0 ? 'text-green-500' : 'text-red-500' },
-            { label: 'Today\'s P/L', value: `${totalChange24h >= 0 ? '+' : '-'}$${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: '', color: totalChange24h >= 0 ? 'text-green-500' : 'text-red-500' },
-            { label: 'Best Performing', value: bestAsset.id || 'N/A', subValue: bestAsset.id ? `${bestAsset.performance.toFixed(2)}%` : '', color: 'text-green-500' },
-            { label: 'Worst Performing', value: worstAsset.id || 'N/A', subValue: worstAsset.id ? `${worstAsset.performance.toFixed(2)}%` : '', color: 'text-red-500' },
-            { label: 'Holdings', value: portfolioItems.length, subValue: 'Assets', color: 'text-blue-500' },
-            { label: 'Total Return', value: `${unrealizedPLPct.toFixed(2)}%`, subValue: 'Lifetime', color: unrealizedPLPct >= 0 ? 'text-green-500' : 'text-red-500' }
+            { id: 'stat-total-value', label: 'Total Value', value: totalValue, prefix: '$', color: '' },
+            { id: 'stat-cost-basis', label: 'Total Cost Basis', value: totalCost, prefix: '$', color: 'text-slate-400' },
+            { id: 'stat-unrealized-pl', label: 'Unrealized P/L', value: unrealizedPL, prefix: unrealizedPL >= 0 ? '+$' : '-$', color: unrealizedPL >= 0 ? 'text-green-500' : 'text-red-500', absolute: true },
+            { id: 'stat-roi', label: 'ROI %', value: roi, suffix: '%', color: roi >= 0 ? 'text-green-500' : 'text-red-500' },
+            { id: 'stat-today-pl', label: 'Today\'s P/L', value: totalChange24h, prefix: totalChange24h >= 0 ? '+$' : '-$', color: totalChange24h >= 0 ? 'text-green-500' : 'text-red-500', absolute: true },
+            { id: 'stat-holdings', label: 'Holdings', value: portfolioItems.length, suffix: ' Assets', color: 'text-blue-500', decimals: 0 }
         ];
 
         statsGrid.innerHTML = stats.map(stat => `
-            <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-5 border border-slate-200 dark:border-dark-border">
-                <p class="text-[10px] font-bold text-slate-400 dark:text-dark-muted uppercase tracking-widest mb-2">${stat.label}</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-xl font-black ${stat.color}">${stat.value}</span>
-                    ${stat.subValue ? `<span class="text-xs font-bold ${stat.color} opacity-70">${stat.subValue}</span>` : ''}
+            <div class="bg-white dark:bg-dark-card rounded-2xl p-4 border border-slate-200 dark:border-dark-border min-w-[160px] shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 dark:text-dark-muted uppercase tracking-widest mb-1">${stat.label}</p>
+                <div class="flex items-baseline gap-1">
+                    <span id="${stat.id}" class="text-lg font-black ${stat.color}">--</span>
                 </div>
             </div>
         `).join('');
+
+        // Animate the stats
+        stats.forEach(stat => {
+            const val = stat.absolute ? Math.abs(stat.value) : stat.value;
+            this.animateValue(stat.id, 0, val, 1000, stat.prefix || '', stat.suffix || '', stat.decimals !== undefined ? stat.decimals : 2);
+        });
 
         if (holdingsCount) holdingsCount.innerText = `${portfolioItems.length} Assets`;
 
@@ -822,6 +1144,9 @@ export const UI = {
             holdingsTable.classList.remove('hidden');
             this.renderHoldingsTable(portfolioItems, allCoins, totalValue);
             this.renderPortfolioCharts(portfolioItems, allCoins, totalValue);
+            this.renderSectorAllocation(portfolioItems, allCoins, totalValue);
+            this.renderTopPerformers(bestAsset, worstAsset);
+            this.renderRiskMeter(portfolioItems, allCoins, totalValue);
         }
 
         lucide.createIcons();
