@@ -67,28 +67,57 @@
         .panel-open {
             overflow: hidden;
         }
-        .panel-open #portfolio-panel {
-            transform: translateX(0);
-        }
         .panel-open #portfolio-panel-overlay {
             opacity: 1;
             pointer-events: auto;
         }
+        .panel-open #portfolio-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1) translateY(0);
+        }
+        #portfolio-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translate(-50%, -60%) scale(0.96);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @media (max-width: 768px) {
+            #portfolio-panel {
+                width: 96vw !important;
+                height: 92vh !important;
+                border-radius: 20px !important;
+                transform: translate(-50%, -55%) scale(0.96) !important;
+                top: 50% !important;
+            }
+            .panel-open #portfolio-panel {
+                transform: translate(-50%, -50%) scale(1) !important;
+            }
+        }
         .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .dark .glass {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .holdings-table th {
             @apply px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-dark-muted border-b border-slate-100 dark:border-dark-border sticky top-0 bg-white/90 dark:bg-dark-bg/90 backdrop-blur-sm z-10;
         }
         .holdings-table td {
             @apply px-4 py-4 text-sm border-b border-slate-50 dark:border-dark-border/50;
+        }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
@@ -158,150 +187,133 @@
             </div>
         </div>
 
-        <!-- Portfolio Slide-in Panel -->
-        <div id="portfolio-panel-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[110] opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        <div id="portfolio-panel" class="fixed top-0 right-0 h-full w-full max-w-4xl bg-white dark:bg-dark-bg border-l border-slate-200 dark:border-dark-border z-[120] translate-x-full transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col shadow-2xl">
-            <!-- Panel Header & Sticky Stats -->
-            <div class="sticky top-0 z-30 bg-white/95 dark:bg-dark-bg/95 backdrop-blur-md border-b border-slate-200 dark:border-dark-border">
-                <header class="p-6 flex items-center justify-between">
+        <!-- Portfolio Modal Dashboard -->
+        <div id="portfolio-panel-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        <div id="portfolio-panel" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] h-[90vh] md:w-[88vw] md:h-[88vh] glass dark:bg-dark-bg/80 border border-white/20 dark:border-dark-border rounded-[20px] z-[120] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Sticky Header -->
+            <div class="sticky top-0 z-30 bg-white/10 dark:bg-dark-bg/40 backdrop-blur-xl border-b border-white/10 dark:border-dark-border/50">
+                <header class="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold">Portfolio Manager</h2>
-                        <p class="text-sm text-slate-500 dark:text-dark-muted">Premium analytics & performance tracking</p>
+                        <h2 class="text-xl md:text-2xl font-black tracking-tight">Portfolio Manager</h2>
+                        <p class="text-xs md:text-sm text-slate-500 dark:text-dark-muted font-medium">Premium Analytics & Performance Tracking</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button id="add-asset-panel-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20">
+                    <div class="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
+                        <button id="add-asset-panel-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold text-xs md:text-sm transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20">
                             <i data-lucide="plus" class="w-4 h-4"></i>
                             <span>Add Asset</span>
                         </button>
-                        <button id="close-panel-btn" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                            <i data-lucide="x" class="w-6 h-6"></i>
+                        <button id="close-panel-btn" class="p-2.5 md:p-3 hover:bg-white/10 dark:hover:bg-slate-800 rounded-xl transition-all hover:rotate-90">
+                            <i data-lucide="x" class="w-5 h-5 md:w-6 md:h-6"></i>
                         </button>
                     </div>
                 </header>
-
-                <!-- Quick Statistics Horizontal Scroll -->
-                <div class="px-6 pb-6 overflow-x-auto no-scrollbar">
-                    <div id="panel-stats-grid" class="flex gap-4 min-w-max">
-                        <!-- Stats will be injected here with animated counters -->
-                    </div>
-                </div>
             </div>
 
-            <!-- Panel Content -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar pb-20">
-                <!-- Main Portfolio Performance Chart -->
-                <section class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
-                    <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Portfolio Performance</h3>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
-                    </button>
-                    <div class="px-6 pb-6 space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                        <div></div>
-                        <div class="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-lg self-start w-fit">
-                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="24H">24H</button>
-                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="7D">7D</button>
-                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors bg-white dark:bg-dark-bg shadow-sm" data-time="30D">30D</button>
-                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="90D">90D</button>
-                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="1Y">1Y</button>
-                            <button class="portfolio-timeframe-btn px-3 py-1 rounded-md text-[10px] font-bold transition-colors" data-time="ALL">ALL</button>
+            <!-- Dashboard Content Area -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-10 space-y-8 md:space-y-10 no-scrollbar">
+                <!-- Row 1: Quick Statistics -->
+                <div id="panel-stats-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <!-- Stats will be injected here -->
+                </div>
+
+                <!-- Row 2: Portfolio Performance Chart (Large) -->
+                <section class="bg-white/50 dark:bg-dark-card/50 rounded-[20px] border border-white/10 dark:border-dark-border overflow-hidden backdrop-blur-sm p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-blue-500 mb-1">Portfolio Performance</h3>
+                            <p class="text-xl font-bold">Value History</p>
+                        </div>
+                        <div class="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl self-start">
+                            <button class="portfolio-timeframe-btn px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all" data-time="24H">24H</button>
+                            <button class="portfolio-timeframe-btn px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all" data-time="7D">7D</button>
+                            <button class="portfolio-timeframe-btn px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all bg-white dark:bg-dark-bg shadow-sm" data-time="30D">30D</button>
+                            <button class="portfolio-timeframe-btn px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all" data-time="90D">90D</button>
+                            <button class="portfolio-timeframe-btn px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all" data-time="1Y">1Y</button>
+                            <button class="portfolio-timeframe-btn px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all" data-time="ALL">ALL</button>
                         </div>
                     </div>
-                        <div class="h-72 w-full">
-                            <canvas id="portfolio-performance-chart"></canvas>
-                        </div>
+                    <div class="h-[400px] w-full">
+                        <canvas id="portfolio-performance-chart"></canvas>
                     </div>
                 </section>
 
+                <!-- Row 3: Allocation & Risk -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Top Winners & Losers -->
-                    <div class="space-y-4">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted px-2">Top Performers</h3>
-                        <div id="top-winner-card" class="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between">
-                            <!-- Injected -->
-                        </div>
-                        <div id="biggest-loser-card" class="bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 rounded-2xl p-4 flex items-center justify-between">
-                            <!-- Injected -->
+                    <!-- Asset Allocation -->
+                    <div class="bg-white/50 dark:bg-dark-card/50 rounded-[20px] border border-white/10 dark:border-dark-border p-8 backdrop-blur-sm">
+                        <h3 class="text-xs font-black mb-6 uppercase tracking-[0.2em] text-blue-500">Asset Allocation</h3>
+                        <div class="h-72">
+                            <canvas id="allocation-chart"></canvas>
                         </div>
                     </div>
 
                     <!-- Risk Meter -->
-                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-6 border border-slate-200 dark:border-dark-border">
-                        <h3 class="text-xs font-bold mb-6 uppercase tracking-widest text-slate-500 dark:text-dark-muted">Portfolio Risk</h3>
+                    <div class="bg-white/50 dark:bg-dark-card/50 rounded-[20px] border border-white/10 dark:border-dark-border p-8 backdrop-blur-sm">
+                        <h3 class="text-xs font-black mb-8 uppercase tracking-[0.2em] text-blue-500">Portfolio Risk</h3>
                         <div id="risk-meter-container" class="flex flex-col items-center">
-                            <div class="relative w-32 h-32 mb-4">
+                            <div class="relative w-40 h-40 mb-6">
                                 <canvas id="risk-gauge"></canvas>
-                                <div id="risk-value" class="absolute inset-0 flex items-center justify-center text-2xl font-black">--</div>
+                                <div id="risk-value" class="absolute inset-0 flex items-center justify-center text-4xl font-black">--</div>
                             </div>
-                            <div id="risk-label" class="font-bold text-lg mb-2">Analyzing...</div>
-                            <p id="risk-desc" class="text-xs text-slate-500 dark:text-dark-muted text-center leading-relaxed"></p>
+                            <div id="risk-label" class="font-bold text-2xl mb-2">Analyzing...</div>
+                            <p id="risk-desc" class="text-sm text-slate-500 dark:text-dark-muted text-center leading-relaxed max-w-sm"></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Allocation Charts -->
+                <!-- Row 4: P&L Ranking & Sector -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
-                        <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Asset Allocation</h3>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
-                        </button>
-                        <div class="px-6 pb-6">
-                            <div class="h-64">
-                                <canvas id="allocation-chart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
-                        <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Sector Allocation</h3>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
-                        </button>
-                        <div class="px-6 pb-6">
-                            <div class="h-64">
-                                <canvas id="sector-chart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profit & Loss Ranking -->
-                <div class="bg-slate-50 dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
-                    <button class="w-full p-6 flex items-center justify-between group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-dark-muted">Asset Profit / Loss Ranking</h3>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-all chevron"></i>
-                    </button>
-                    <div class="px-6 pb-6">
+                    <!-- P&L Bar Chart -->
+                    <div class="bg-white/50 dark:bg-dark-card/50 rounded-[20px] border border-white/10 dark:border-dark-border p-8 backdrop-blur-sm">
+                        <h3 class="text-xs font-black mb-6 uppercase tracking-[0.2em] text-blue-500">Profit / Loss Ranking</h3>
                         <div class="h-80">
                             <canvas id="pl-chart"></canvas>
                         </div>
                     </div>
+
+                    <!-- Sector Allocation -->
+                    <div class="bg-white/50 dark:bg-dark-card/50 rounded-[20px] border border-white/10 dark:border-dark-border p-8 backdrop-blur-sm">
+                        <h3 class="text-xs font-black mb-6 uppercase tracking-[0.2em] text-blue-500">Sector Allocation</h3>
+                        <div class="h-80">
+                            <canvas id="sector-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Holdings Section -->
-                <div id="holdings-section" class="space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-dark-border pb-4">
+                <!-- Row 5: Top Winners & Losers -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="top-winner-card" class="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[20px] p-6 flex items-center justify-between">
+                        <!-- Injected -->
+                    </div>
+                    <div id="biggest-loser-card" class="bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-[20px] p-6 flex items-center justify-between">
+                        <!-- Injected -->
+                    </div>
+                </div>
+
+                <!-- Row 6: Holdings Table -->
+                <div id="holdings-section" class="space-y-8 bg-white/30 dark:bg-dark-card/30 rounded-[20px] border border-white/10 dark:border-dark-border p-6 md:p-8 backdrop-blur-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/10 dark:border-dark-border/50 pb-6">
                         <div class="flex items-center gap-4">
-                            <h3 class="text-xl font-bold">Holdings</h3>
-                            <span id="holdings-count" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500">0 Assets</span>
+                            <h3 class="text-2xl font-bold">Holdings</h3>
+                            <span id="holdings-count" class="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-black">0 Assets</span>
                         </div>
                         <div class="relative">
-                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="text" id="holdings-search" placeholder="Search assets..." class="pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64 transition-all">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" id="holdings-search" placeholder="Search assets..." class="pl-12 pr-6 py-3 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-white/10 dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-72 transition-all">
                         </div>
                     </div>
 
-                    <div id="holdings-container" class="overflow-x-auto -mx-6 px-6">
-                        <table class="w-full text-left holdings-table border-separate border-spacing-0" id="holdings-table">
+                    <div id="holdings-container" class="overflow-x-auto">
+                        <table class="w-full text-left holdings-table border-separate border-spacing-y-2" id="holdings-table">
                             <!-- Table injected here -->
                         </table>
-                        <div id="holdings-empty-state" class="hidden py-20 text-center">
-                            <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i data-lucide="briefcase" class="w-10 h-10 text-slate-400"></i>
+                        <div id="holdings-empty-state" class="hidden py-24 text-center">
+                            <div class="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                                <i data-lucide="briefcase" class="w-12 h-12 text-blue-500"></i>
                             </div>
-                            <h4 class="text-xl font-bold mb-2">No assets found</h4>
-                            <p class="text-slate-500 dark:text-dark-muted mb-8">You haven't added any crypto assets yet.</p>
-                            <button id="empty-state-add-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20">
+                            <h4 class="text-2xl font-bold mb-3">No assets found</h4>
+                            <p class="text-slate-500 dark:text-dark-muted mb-10 max-w-sm mx-auto">Start building your crypto portfolio by adding your first asset.</p>
+                            <button id="empty-state-add-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold transition-all shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95">
                                 + Add Your First Asset
                             </button>
                         </div>
