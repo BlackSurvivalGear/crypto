@@ -65,11 +65,11 @@ export const UI = {
         let html = `
             <thead class="hidden md:table-header-group">
                 <tr class="text-xs text-slate-500 dark:text-dark-muted border-b border-slate-200 dark:border-dark-border uppercase tracking-wider">
-                    <th class="px-6 py-4 font-semibold text-left">#</th>
-                    <th class="px-6 py-4 font-semibold">Asset</th>
-                    <th class="px-6 py-4 font-semibold text-right">Price</th>
-                    <th class="px-6 py-4 font-semibold text-right">24h Change</th>
-                    <th class="px-6 py-4 font-semibold text-right">Market Cap</th>
+                    <th class="px-6 py-4 font-semibold text-left cursor-pointer hover:text-blue-500">#</th>
+                    <th class="px-6 py-4 font-semibold cursor-pointer hover:text-blue-500">Asset</th>
+                    <th class="px-6 py-4 font-semibold text-right cursor-pointer hover:text-blue-500">Price</th>
+                    <th class="px-6 py-4 font-semibold text-right cursor-pointer hover:text-blue-500">24h Change</th>
+                    <th class="px-6 py-4 font-semibold text-right cursor-pointer hover:text-blue-500">Market Cap</th>
                     <th class="px-6 py-4 font-semibold text-right">Volume (24h)</th>
                     <th class="px-6 py-4 font-semibold text-right">Last 7 Days</th>
                 </tr>
@@ -187,7 +187,7 @@ export const UI = {
             totalChange24h += priceChange;
 
             return `
-                <div class="flex items-center justify-between group">
+                <div class="flex items-center justify-between group p-2 -mx-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <div class="flex items-center gap-3">
                         ${coin.image ? `<img src="${coin.image}" class="w-6 h-6 rounded-full" alt="${coin.name}">` : `<i data-lucide="${coin.icon || 'circle'}" class="w-4 h-4 ${coin.color || 'text-blue-500'}"></i>`}
                         <div>
@@ -195,11 +195,16 @@ export const UI = {
                             <div class="text-xs text-slate-500 dark:text-dark-muted">${item.amount} ${coin.symbol.toUpperCase()}</div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-sm font-bold">$${itemValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div class="text-[10px] ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}">
-                            ${coin.change >= 0 ? '+' : ''}${typeof coin.change === 'number' ? coin.change.toFixed(2) : coin.change}%
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="text-sm font-bold">$${itemValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div class="text-[10px] ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'} font-medium">
+                                ${coin.change >= 0 ? '+' : ''}${typeof coin.change === 'number' ? coin.change.toFixed(2) : coin.change}%
+                            </div>
                         </div>
+                        <button class="remove-portfolio-item p-1.5 rounded-lg lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all" data-id="${coin.id}">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
                     </div>
                 </div>
             `;
@@ -281,7 +286,7 @@ export const UI = {
                             ${coin.change >= 0 ? '+' : ''}${typeof coin.change === 'number' ? coin.change.toFixed(2) : coin.change}%
                         </span>
                     </div>
-                    <button class="remove-watchlist-item p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all" data-id="${coin.id}">
+                    <button class="remove-watchlist-item p-1.5 rounded-lg lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all" data-id="${coin.id}">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>

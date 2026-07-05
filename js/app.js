@@ -30,12 +30,13 @@ window.allCoins = allCoins;
 document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
 
-    // Initial UI with mocks
+    // Initial UI with mocks and stored data
     const watchlistIds = Store.getWatchlist();
+    const portfolio = Store.getPortfolio();
     UI.isInWatchlist = (id) => Store.getWatchlist().includes(id);
     UI.renderMarketCards(COINS, watchlistIds);
     UI.renderAssetTable(COINS);
-    UI.renderPortfolio(PORTFOLIO, COINS);
+    UI.renderPortfolio(portfolio, COINS);
     UI.renderWatchlist(COINS, watchlistIds);
     UI.renderNews(NEWS);
     UI.initMainChart('BTC');
@@ -47,13 +48,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Set up refresh intervals
     setInterval(async () => {
-        const fng = await API.fetchFearAndGreed();
-        UI.renderFearAndGreed(fng);
-    }, 5 * 60 * 1000); // 5 minutes
+        await loadDashboardData();
+    }, 60 * 1000); // 60 seconds
 });
 
 async function loadDashboardData() {
     try {
+        const searchInput = document.getElementById('asset-search');
+        const currentSearch = searchInput ? searchInput.value.toLowerCase() : '';
+
         const liveCoins = await API.fetchCoins();
         allCoins = liveCoins.map(c => ({
             id: c.id,
@@ -77,6 +80,21 @@ async function loadDashboardData() {
 
         UI.renderMarketCards(allCoins, watchlistIds);
         UI.renderAssetTable(allCoins);
+
+        // Re-apply search filter if active
+        if (currentSearch) {
+            const rows = document.querySelectorAll('#asset-table tbody tr');
+            rows.forEach(row => {
+                const name = row.querySelector('.font-semibold').innerText.toLowerCase();
+                const symbol = row.querySelector('.uppercase').innerText.toLowerCase();
+                if (name.includes(currentSearch) || symbol.includes(currentSearch)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
         UI.renderWatchlist(allCoins, watchlistIds);
         UI.renderNews(news);
         UI.renderPortfolio(portfolio, allCoins);
@@ -174,10 +192,24 @@ function setupInteractivity() {
             e.stopPropagation();
             const id = btn.dataset.id;
             const watchlist = Store.removeFromWatchlist(id);
-            UI.renderWatchlist(allCoins, watchlist);
-            UI.renderMarketCards(allCoins, watchlist);
-            UI.renderAssetTable(allCoins);
+            const coins = allCoins.length > 0 ? allCoins : COINS;
+            UI.renderWatchlist(coins, watchlist);
+            UI.renderMarketCards(coins, watchlist);
+            UI.renderAssetTable(coins);
             UI.showNotification('Removed from watchlist', 'info');
+        }
+    });
+
+    // Remove from Portfolio
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.remove-portfolio-item');
+        if (btn) {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const portfolio = Store.removeFromPortfolio(id);
+            const coins = allCoins.length > 0 ? allCoins : COINS;
+            UI.renderPortfolio(portfolio, coins);
+            UI.showNotification('Asset removed from portfolio', 'info');
         }
     });
 
@@ -201,14 +233,20 @@ function setupInteractivity() {
         });
     });
 
-    // Sorting Logic
-    const tableHeaders = document.querySelectorAll('#asset-table th');
-    tableHeaders.forEach((th, index) => {
-        if (index < 5) {
-            th.classList.add('cursor-pointer', 'hover:text-blue-500');
-            th.addEventListener('click', () => sortTable(index));
-        }
-    });
+    // Sorting Logic via Event Delegation
+    const assetTable = document.getElementById('asset-table');
+    if (assetTable) {
+        assetTable.addEventListener('click', (e) => {
+            const th = e.target.closest('th');
+            if (th) {
+                const index = Array.from(th.parentNode.children).indexOf(th);
+                if (index < 5) {
+                    sortTable(index);
+                }
+            }
+        });
+
+    }
 
     // Watchlist Toggles in Table
     document.addEventListener('click', (e) => {

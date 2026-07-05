@@ -30,15 +30,24 @@ export const Store = {
         let portfolio = this.getPortfolio();
         const index = portfolio.findIndex(item => item.id === id);
         if (index > -1) {
-            if (amount <= 0) {
+            portfolio[index].amount += amount;
+            if (portfolio[index].amount <= 0) {
                 portfolio.splice(index, 1);
-            } else {
-                portfolio[index].amount = amount;
             }
         } else if (amount > 0) {
             portfolio.push({ id, amount });
         }
         this.set('portfolio', portfolio);
+        return portfolio;
+    },
+
+    removeFromPortfolio(id) {
+        let portfolio = this.getPortfolio();
+        const index = portfolio.findIndex(item => item.id === id);
+        if (index > -1) {
+            portfolio.splice(index, 1);
+            this.set('portfolio', portfolio);
+        }
         return portfolio;
     },
 

@@ -1,6 +1,6 @@
 // js/api.js
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds
 const cache = new Map();
 
 export const API = {
