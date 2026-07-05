@@ -392,57 +392,10 @@
             </div>
 
             <div class="flex flex-col lg:grid lg:grid-cols-3 gap-8">
-                <!-- Top Cards -->
-                <div id="market-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:col-span-3 lg:order-1 order-8">
-                    <!-- Content will be injected here -->
-                </div>
-
-                <!-- Main Chart Area -->
-                <div class="lg:col-span-2 lg:space-y-8 lg:order-2 order-2 max-lg:contents">
-                    <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6 order-5">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                            <div class="flex items-center gap-4">
-                                <div id="chart-asset-icon" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                    <i data-lucide="bitcoin" class="w-6 h-6 text-orange-500"></i>
-                                </div>
-                                <div>
-                                    <h3 id="chart-asset-name" class="text-lg font-bold">Bitcoin</h3>
-                                    <div class="flex items-center gap-2">
-                                        <span id="chart-asset-price" class="text-2xl font-bold">$64,125.40</span>
-                                        <span id="chart-asset-change" class="text-sm font-semibold text-green-500">+2.45%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start">
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1h">1H</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors bg-white dark:bg-dark-card shadow-sm" data-time="24h">24H</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="7d">7D</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="30d">30D</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1y">1Y</button>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <div id="tv-chart-widget" class="h-full w-full"></div>
-                        </div>
-                    </section>
-
-                    <!-- Asset Table -->
-                    <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border overflow-hidden order-6">
-                        <div class="p-6 border-b border-slate-200 dark:border-dark-border flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">Assets</h2>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left" id="asset-table">
-                                <!-- Table content will be injected here -->
-                            </table>
-                        </div>
-                    </section>
-                </div>
-
                 <!-- Sidebar Area -->
-                <div class="lg:space-y-8 lg:order-3 order-1 max-lg:contents">
+                <div class="lg:space-y-8">
                     <!-- Portfolio Tracker -->
-                    <section id="portfolio" class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6 cursor-pointer hover:border-blue-500/50 transition-all group relative overflow-hidden order-1">
+                    <section id="portfolio" class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6 cursor-pointer hover:border-blue-500/50 transition-all group relative overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-4">
@@ -488,7 +441,7 @@
                     </section>
 
                     <!-- Watchlist -->
-                    <section id="watchlist" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6 order-2">
+                    <section id="watchlist" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold">Watchlist</h2>
                             <div class="relative flex-1 max-w-[150px] ml-4">
@@ -503,7 +456,7 @@
                     </section>
 
                     <!-- Market Sentiment -->
-                    <section id="sentiment" class="space-y-6 order-3">
+                    <section id="sentiment" class="space-y-6">
                         <!-- Fear & Greed Index -->
                         <div id="fear-greed-card" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                             <h2 class="text-lg font-semibold mb-4">Fear & Greed Index</h2>
@@ -515,7 +468,7 @@
 
                     <!-- Crypto Bubbles Quick Access -->
                     <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer"
-                       class="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/25 group order-4">
+                       class="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/25 group">
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                                 <i data-lucide="layout-grid" class="w-5 h-5"></i>
@@ -529,7 +482,7 @@
                     </a>
 
                     <!-- News -->
-                    <section id="news" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6 order-7">
+                    <section id="news" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold">Market News</h2>
                         </div>
@@ -537,6 +490,53 @@
                             <!-- News items will be injected here -->
                         </div>
                     </section>
+                </div>
+
+                <!-- Main Chart Area -->
+                <div class="lg:col-span-2 lg:space-y-8">
+                    <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                            <div class="flex items-center gap-4">
+                                <div id="chart-asset-icon" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                    <i data-lucide="bitcoin" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <div>
+                                    <h3 id="chart-asset-name" class="text-lg font-bold">Bitcoin</h3>
+                                    <div class="flex items-center gap-2">
+                                        <span id="chart-asset-price" class="text-2xl font-bold">$64,125.40</span>
+                                        <span id="chart-asset-change" class="text-sm font-semibold text-green-500">+2.45%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start">
+                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1h">1H</button>
+                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors bg-white dark:bg-dark-card shadow-sm" data-time="24h">24H</button>
+                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="7d">7D</button>
+                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="30d">30D</button>
+                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1y">1Y</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div id="tv-chart-widget" class="h-full w-full"></div>
+                        </div>
+                    </section>
+
+                    <!-- Asset Table -->
+                    <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border overflow-hidden">
+                        <div class="p-6 border-b border-slate-200 dark:border-dark-border flex justify-between items-center">
+                            <h2 class="text-lg font-semibold">Assets</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left" id="asset-table">
+                                <!-- Table content will be injected here -->
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Top Cards -->
+                <div id="market-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:col-span-3">
+                    <!-- Content will be injected here -->
                 </div>
             </div>
         </main>
