@@ -19,35 +19,48 @@ export const Store = {
     },
 
     getPortfolio() {
-        return this.get('portfolio', [
-            { id: 'bitcoin', amount: 0.15 },
-            { id: 'ethereum', amount: 0.8 },
-            { id: 'solana', amount: 5 }
+        let portfolio = this.get('portfolio', [
+            { id: 'bitcoin', amount: 0.15, buyPrice: 45000, date: '2023-10-15', notes: 'Initial investment' },
+            { id: 'ethereum', amount: 0.8, buyPrice: 2200, date: '2023-11-20', notes: 'DCA' },
+            { id: 'solana', amount: 5, buyPrice: 65, date: '2024-01-05', notes: 'Bullish on ecosystem' }
         ]);
+
+        // Migration: Ensure all items have necessary fields
+        return portfolio.map(item => ({
+            id: item.id,
+            amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || 0),
+            buyPrice: typeof item.buyPrice === 'number' ? item.buyPrice : parseFloat(item.buyPrice || 0),
+            date: item.date || '',
+            notes: item.notes || ''
+        }));
     },
 
-    updatePortfolio(id, amount) {
+    updatePortfolio(assetData) {
         let portfolio = this.getPortfolio();
-        const index = portfolio.findIndex(item => item.id === id);
+        const index = portfolio.findIndex(item => item.id === assetData.id);
+
+        const newItem = {
+            id: assetData.id,
+            amount: parseFloat(assetData.amount),
+            buyPrice: parseFloat(assetData.buyPrice),
+            date: assetData.date || '',
+            notes: assetData.notes || ''
+        };
+
         if (index > -1) {
-            portfolio[index].amount += amount;
-            if (portfolio[index].amount <= 0) {
-                portfolio.splice(index, 1);
-            }
-        } else if (amount > 0) {
-            portfolio.push({ id, amount });
+            portfolio[index] = newItem;
+        } else {
+            portfolio.push(newItem);
         }
+
         this.set('portfolio', portfolio);
         return portfolio;
     },
 
     removeFromPortfolio(id) {
         let portfolio = this.getPortfolio();
-        const index = portfolio.findIndex(item => item.id === id);
-        if (index > -1) {
-            portfolio.splice(index, 1);
-            this.set('portfolio', portfolio);
-        }
+        portfolio = portfolio.filter(item => item.id !== id);
+        this.set('portfolio', portfolio);
         return portfolio;
     },
 
