@@ -100,6 +100,10 @@ async function loadDashboardData() {
         UI.renderPortfolio(portfolio, allCoins);
         UI.renderFearAndGreed(fng);
 
+        if (document.body.classList.contains('panel-open')) {
+            UI.renderPortfolioPanel(portfolio, allCoins);
+        }
+
         updateGlobalStats(allCoins);
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
@@ -200,7 +204,39 @@ function setupInteractivity() {
         }
     });
 
-    // Remove from Portfolio
+    // Manage Portfolio Buttons (Open Panel)
+    const portfolioCard = document.getElementById('portfolio');
+    const managePortfolioBtn = document.getElementById('manage-portfolio-btn');
+    const portfolioPanel = document.getElementById('portfolio-panel');
+    const portfolioOverlay = document.getElementById('portfolio-panel-overlay');
+
+    const openPortfolioPanel = () => {
+        document.body.classList.add('panel-open');
+        UI.renderPortfolioPanel(Store.getPortfolio(), allCoins);
+    };
+
+    const closePortfolioPanel = () => {
+        document.body.classList.remove('panel-open');
+    };
+
+    if (portfolioCard) portfolioCard.addEventListener('click', openPortfolioPanel);
+    if (managePortfolioBtn) managePortfolioBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPortfolioPanel();
+    });
+
+    const closePanelBtn = document.getElementById('close-panel-btn');
+    if (closePanelBtn) closePanelBtn.addEventListener('click', closePortfolioPanel);
+    if (portfolioOverlay) portfolioOverlay.addEventListener('click', closePortfolioPanel);
+
+    // ESC to close panel
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('panel-open')) {
+            closePortfolioPanel();
+        }
+    });
+
+    // Remove from Portfolio (Sidecard - Deprecated, but keeping for compatibility)
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.remove-portfolio-item');
         if (btn) {
@@ -212,6 +248,128 @@ function setupInteractivity() {
             UI.showNotification('Asset removed from portfolio', 'info');
         }
     });
+
+    // Portfolio Panel: Add Asset Button
+    const addAssetPanelBtn = document.getElementById('add-asset-panel-btn');
+    const emptyStateAddBtn = document.getElementById('empty-state-add-btn');
+    const modal = document.getElementById('portfolio-modal');
+
+    const openAddModal = () => {
+        document.getElementById('modal-title').innerText = 'Add Asset';
+        document.getElementById('edit-asset-id').value = '';
+        document.getElementById('portfolio-form').reset();
+        document.getElementById('selected-asset-preview').classList.add('hidden');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+
+    if (addAssetPanelBtn) addAssetPanelBtn.addEventListener('click', openAddModal);
+    if (emptyStateAddBtn) emptyStateAddBtn.addEventListener('click', openAddModal);
+
+    // Portfolio Modal: Asset Search
+    const modalAssetSearch = document.getElementById('modal-asset-search');
+    const modalSearchResults = document.getElementById('modal-search-results');
+    if (modalAssetSearch) {
+        modalAssetSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 1) {
+                modalSearchResults.classList.add('hidden');
+                return;
+            }
+            const results = allCoins.filter(c =>
+                c.name.toLowerCase().includes(query) ||
+                c.symbol.toLowerCase().includes(query)
+            ).slice(0, 8);
+            UI.renderPortfolioSearchResults(results);
+        });
+    }
+
+    // Portfolio Modal: Select Asset from results
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.select-portfolio-asset-btn');
+        if (btn) {
+            const id = btn.dataset.id;
+            const coin = allCoins.find(c => c.id === id);
+            if (coin) {
+                document.getElementById('edit-asset-id').value = id;
+                document.getElementById('modal-asset-search').value = coin.name;
+                UI.updateAssetPreview(coin);
+                modalSearchResults.classList.add('hidden');
+            }
+        }
+    });
+
+    // Portfolio Panel: Edit/Delete Asset
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-asset-btn');
+        const deleteBtn = e.target.closest('.delete-asset-btn');
+
+        if (editBtn) {
+            const id = editBtn.dataset.id;
+            const portfolio = Store.getPortfolio();
+            const asset = portfolio.find(item => item.id === id);
+            const coin = allCoins.find(c => c.id === id);
+
+            if (asset && coin) {
+                document.getElementById('modal-title').innerText = 'Edit Asset';
+                document.getElementById('edit-asset-id').value = id;
+                document.getElementById('modal-asset-search').value = coin.name;
+                document.getElementById('portfolio-quantity').value = asset.amount;
+                document.getElementById('portfolio-buy-price').value = asset.buyPrice;
+                document.getElementById('portfolio-date').value = asset.date;
+                document.getElementById('portfolio-notes').value = asset.notes;
+
+                UI.updateAssetPreview(coin);
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.id;
+            if (confirm('Are you sure you want to remove this asset?')) {
+                const portfolio = Store.removeFromPortfolio(id);
+                UI.renderPortfolio(portfolio, allCoins);
+                UI.renderPortfolioPanel(portfolio, allCoins);
+                UI.showNotification('Asset removed from portfolio', 'info');
+            }
+        }
+    });
+
+    // Holdings Table: Sorting
+    document.addEventListener('click', (e) => {
+        const th = e.target.closest('.holdings-table th[data-sort]');
+        if (th) {
+            const sortKey = th.dataset.sort;
+
+            // Toggle sort order
+            if (window.holdingsSortKey === sortKey) {
+                window.holdingsSortOrder = (window.holdingsSortOrder === 'asc') ? 'desc' : 'asc';
+            } else {
+                window.holdingsSortKey = sortKey;
+                window.holdingsSortOrder = 'desc';
+            }
+
+            const portfolio = Store.getPortfolio();
+            UI.renderHoldingsTable(portfolio, allCoins, portfolio.reduce((sum, item) => {
+                const c = allCoins.find(coin => coin.id === item.id);
+                return sum + (c ? c.price * item.amount : 0);
+            }, 0));
+        }
+    });
+
+    // Holdings Search
+    const holdingsSearch = document.getElementById('holdings-search');
+    if (holdingsSearch) {
+        holdingsSearch.addEventListener('input', () => {
+            const portfolio = Store.getPortfolio();
+            const totalValue = portfolio.reduce((sum, item) => {
+                const c = allCoins.find(coin => coin.id === item.id);
+                return sum + (c ? c.price * item.amount : 0);
+            }, 0);
+            UI.renderHoldingsTable(portfolio, allCoins, totalValue);
+        });
+    }
 
     // Timeframe Buttons
     const buttons = document.querySelectorAll('.timeframe-btn');
@@ -283,25 +441,18 @@ function setupInteractivity() {
     });
 
     // Portfolio Modal Controls
-    const addAssetBtn = document.getElementById('add-asset-btn');
-    const modal = document.getElementById('portfolio-modal');
     const closeModalBtn = document.getElementById('close-modal-btn');
-    const coinSelect = document.getElementById('portfolio-coin-select');
+    const cancelModalBtn = document.getElementById('cancel-modal-btn');
     const portfolioForm = document.getElementById('portfolio-form');
 
-    if (addAssetBtn && modal) {
-        addAssetBtn.addEventListener('click', () => {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            const coins = allCoins.length > 0 ? allCoins : COINS;
-            coinSelect.innerHTML = coins.map(coin =>
-                `<option value="${coin.id}">${coin.name} (${coin.symbol.toUpperCase()})</option>`
-            ).join('');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         });
     }
-
-    if (closeModalBtn && modal) {
-        closeModalBtn.addEventListener('click', () => {
+    if (cancelModalBtn) {
+        cancelModalBtn.addEventListener('click', () => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         });
@@ -310,15 +461,24 @@ function setupInteractivity() {
     if (portfolioForm) {
         portfolioForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const id = coinSelect.value;
+            const id = document.getElementById('edit-asset-id').value;
             const amount = parseFloat(document.getElementById('portfolio-quantity').value);
-            if (id && !isNaN(amount)) {
-                const portfolio = Store.updatePortfolio(id, amount);
-                UI.renderPortfolio(portfolio, allCoins.length > 0 ? allCoins : COINS);
+            const buyPrice = parseFloat(document.getElementById('portfolio-buy-price').value);
+            const date = document.getElementById('portfolio-date').value;
+            const notes = document.getElementById('portfolio-notes').value;
+
+            if (id && !isNaN(amount) && !isNaN(buyPrice)) {
+                const portfolio = Store.updatePortfolio({
+                    id, amount, buyPrice, date, notes
+                });
+                UI.renderPortfolio(portfolio, allCoins);
+                UI.renderPortfolioPanel(portfolio, allCoins);
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 portfolioForm.reset();
                 UI.showNotification('Portfolio updated successfully', 'success');
+            } else {
+                UI.showNotification('Please fill in all required fields', 'error');
             }
         });
     }

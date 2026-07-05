@@ -64,35 +64,172 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        .panel-open {
+            overflow: hidden;
+        }
+        .panel-open #portfolio-panel {
+            transform: translateX(0);
+        }
+        .panel-open #portfolio-panel-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .holdings-table th {
+            @apply px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-dark-muted border-b border-slate-100 dark:border-dark-border sticky top-0 bg-white/90 dark:bg-dark-bg/90 backdrop-blur-sm z-10;
+        }
+        .holdings-table td {
+            @apply px-4 py-4 text-sm border-b border-slate-50 dark:border-dark-border/50;
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-dark-text transition-colors duration-200">
     <div id="app" class="min-h-screen">
         <!-- Notifications Container -->
-        <div id="notifications" class="fixed bottom-4 right-4 z-[110] space-y-2 pointer-events-none"></div>
+        <div id="notifications" class="fixed bottom-4 right-4 z-[130] space-y-2 pointer-events-none"></div>
 
-        <!-- Portfolio Modal -->
-        <div id="portfolio-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border w-full max-w-md p-6 shadow-2xl" style="z-index: 101">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold">Add Asset</h3>
+        <!-- Portfolio Modal (Add/Edit Asset) -->
+        <div id="portfolio-modal" class="fixed inset-0 z-[150] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border w-full max-w-lg p-0 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-6 border-b border-slate-100 dark:border-dark-border flex items-center justify-between">
+                    <h3 id="modal-title" class="text-xl font-bold">Add Asset</h3>
                     <button id="close-modal-btn" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <form id="portfolio-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 dark:text-dark-muted mb-1 uppercase">Select Coin</label>
-                        <select id="portfolio-coin-select" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-                            <!-- Options will be injected here -->
-                        </select>
+                <div class="overflow-y-auto p-6 no-scrollbar">
+                    <form id="portfolio-form" class="space-y-6">
+                        <input type="hidden" id="edit-asset-id">
+
+                        <!-- Asset Search / Autocomplete -->
+                        <div class="relative">
+                            <label class="block text-[10px] font-bold text-slate-500 dark:text-dark-muted mb-2 uppercase tracking-widest">Select Cryptocurrency</label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                                <input type="text" id="modal-asset-search" placeholder="Search by name or symbol..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            </div>
+                            <div id="modal-search-results" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-xl shadow-2xl z-[160] hidden max-h-64 overflow-y-auto">
+                                <!-- Results injected here -->
+                            </div>
+                            <div id="selected-asset-preview" class="mt-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 hidden">
+                                <!-- Selected asset info -->
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 dark:text-dark-muted mb-2 uppercase tracking-widest">Quantity Owned</label>
+                                <input type="number" id="portfolio-quantity" step="any" placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 dark:text-dark-muted mb-2 uppercase tracking-widest">Avg. Buy Price</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                    <input type="number" id="portfolio-buy-price" step="any" placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl pl-8 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 dark:text-dark-muted mb-2 uppercase tracking-widest">Purchase Date (Optional)</label>
+                            <input type="date" id="portfolio-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 dark:text-dark-muted mb-2 uppercase tracking-widest">Notes (Optional)</label>
+                            <textarea id="portfolio-notes" rows="3" placeholder="e.g. Bought during market correction..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                        </div>
+
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" id="cancel-modal-btn" class="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold py-4 rounded-xl transition-colors">Cancel</button>
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-blue-500/30">Save Asset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Slide-in Panel -->
+        <div id="portfolio-panel-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[110] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        <div id="portfolio-panel" class="fixed top-0 right-0 h-full w-full max-w-4xl bg-white dark:bg-dark-bg border-l border-slate-200 dark:border-dark-border z-[120] translate-x-full transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col shadow-2xl">
+            <!-- Panel Header -->
+            <header class="p-6 border-b border-slate-200 dark:border-dark-border sticky top-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-md z-20 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold">Portfolio Manager</h2>
+                    <p class="text-sm text-slate-500 dark:text-dark-muted">Track performance and manage holdings</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="add-asset-panel-btn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Add Asset</span>
+                    </button>
+                    <button id="close-panel-btn" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Panel Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-10 no-scrollbar pb-20">
+                <!-- Portfolio Overview Stats -->
+                <div id="panel-stats-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Stats will be injected here -->
+                </div>
+
+                <!-- Portfolio Performance Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-6 border border-slate-200 dark:border-dark-border">
+                        <h3 class="text-xs font-bold mb-6 uppercase tracking-widest text-slate-500 dark:text-dark-muted">Asset Allocation</h3>
+                        <div class="h-64 flex items-center justify-center">
+                            <canvas id="allocation-chart"></canvas>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 dark:text-dark-muted mb-1 uppercase">Quantity</label>
-                        <input type="number" id="portfolio-quantity" step="any" placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-6 border border-slate-200 dark:border-dark-border">
+                        <h3 class="text-xs font-bold mb-6 uppercase tracking-widest text-slate-500 dark:text-dark-muted">Profit / Loss Distribution</h3>
+                        <div class="h-64 flex items-center justify-center">
+                            <canvas id="pl-chart"></canvas>
+                        </div>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors mt-4">Add Transaction</button>
-                </form>
+                </div>
+
+                <!-- Holdings Section -->
+                <div id="holdings-section" class="space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-dark-border pb-4">
+                        <div class="flex items-center gap-4">
+                            <h3 class="text-xl font-bold">Holdings</h3>
+                            <span id="holdings-count" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-500">0 Assets</span>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" id="holdings-search" placeholder="Search assets..." class="pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64 transition-all">
+                        </div>
+                    </div>
+
+                    <div id="holdings-container" class="overflow-x-auto -mx-6 px-6">
+                        <table class="w-full text-left holdings-table border-separate border-spacing-0" id="holdings-table">
+                            <!-- Table injected here -->
+                        </table>
+                        <div id="holdings-empty-state" class="hidden py-20 text-center">
+                            <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i data-lucide="briefcase" class="w-10 h-10 text-slate-400"></i>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2">No assets found</h4>
+                            <p class="text-slate-500 dark:text-dark-muted mb-8">You haven't added any crypto assets yet.</p>
+                            <button id="empty-state-add-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20">
+                                + Add Your First Asset
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -222,30 +359,47 @@
                     </section>
 
                     <!-- Portfolio Tracker -->
-                    <section id="portfolio" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold">Your Portfolio</h2>
-                            <button id="add-asset-btn" class="p-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                        <div class="text-3xl font-bold mb-1" id="portfolio-value">$0.00</div>
-                        <div class="flex items-center gap-2 mb-6">
-                            <span class="text-sm font-medium text-green-500" id="portfolio-change">+$0 (0.00%)</span>
-                            <span class="text-xs text-slate-500 dark:text-dark-muted">24h Profit</span>
-                        </div>
-
-                        <div class="space-y-4" id="portfolio-items">
-                            <!-- Portfolio items will be injected here -->
-                        </div>
-
-                        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-dark-border">
-                            <div class="flex justify-between text-xs mb-2">
-                                <span class="text-slate-500 dark:text-dark-muted">Allocation</span>
-                                <span class="text-blue-600 dark:text-blue-400 font-medium">Diversified</span>
+                    <section id="portfolio" class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6 cursor-pointer hover:border-blue-500/50 transition-all group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-bold">Portfolio</h2>
+                                <button id="manage-portfolio-btn" class="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">
+                                    Manage <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                </button>
                             </div>
-                            <div class="flex h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                <!-- Allocation bar items -->
+                            <div class="text-3xl font-black mb-1" id="portfolio-value">$0.00</div>
+                            <div id="portfolio-stats-summary" class="space-y-3 mb-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-bold text-green-500" id="portfolio-change">+$0 (0.00%)</span>
+                                        <span class="text-[10px] text-slate-500 dark:text-dark-muted uppercase font-black tracking-widest">24h</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-bold" id="portfolio-total-profit">+$0</span>
+                                        <span class="text-[10px] text-slate-500 dark:text-dark-muted uppercase font-black tracking-widest">Total</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="text-xs font-semibold text-slate-600 dark:text-dark-muted"><span id="portfolio-asset-count">0</span> Assets</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[10px] text-slate-400 dark:text-dark-muted italic" id="portfolio-last-updated">Just now</span>
+                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-[10px] uppercase font-black tracking-widest text-slate-400 dark:text-dark-muted">
+                                    <span>Allocation</span>
+                                    <span class="text-blue-600 dark:text-blue-400" id="portfolio-allocation-label">Diversified</span>
+                                </div>
+                                <div id="portfolio-allocation-bar" class="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                    <!-- Allocation bar items -->
+                                </div>
                             </div>
                         </div>
                     </section>

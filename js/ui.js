@@ -167,66 +167,58 @@ export const UI = {
     },
 
     renderPortfolio(portfolioItems, allCoins) {
-        const container = document.getElementById('portfolio-items');
         const totalValueEl = document.getElementById('portfolio-value');
         const changeEl = document.getElementById('portfolio-change');
+        const totalProfitEl = document.getElementById('portfolio-total-profit');
+        const assetCountEl = document.getElementById('portfolio-asset-count');
+        const lastUpdatedEl = document.getElementById('portfolio-last-updated');
 
-        if (!container || !totalValueEl || !changeEl) return;
+        if (!totalValueEl || !changeEl) return;
 
         let totalValue = 0;
+        let totalCost = 0;
         let totalChange24h = 0;
 
-        const html = portfolioItems.map(item => {
+        portfolioItems.forEach(item => {
             const coin = allCoins.find(c => c.id === item.id);
-            if (!coin) return '';
+            if (!coin) return;
 
             const itemValue = coin.price * item.amount;
+            const itemCost = item.buyPrice * item.amount;
+
             totalValue += itemValue;
+            totalCost += itemCost;
+            totalChange24h += (coin.price_change_24h || 0) * item.amount;
+        });
 
-            const priceChange = (coin.price_change_24h || 0) * item.amount;
-            totalChange24h += priceChange;
+        const totalProfit = totalValue - totalCost;
+        const totalChangePct = totalValue > 0 ? (totalChange24h / (totalValue - totalChange24h)) * 100 : 0;
 
-            return `
-                <div class="flex items-center justify-between group p-2 -mx-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div class="flex items-center gap-3">
-                        ${coin.image ? `<img src="${coin.image}" class="w-6 h-6 rounded-full" alt="${coin.name}">` : `<i data-lucide="${coin.icon || 'circle'}" class="w-4 h-4 ${coin.color || 'text-blue-500'}"></i>`}
-                        <div>
-                            <div class="text-sm font-bold">${coin.symbol.toUpperCase()}</div>
-                            <div class="text-xs text-slate-500 dark:text-dark-muted">${item.amount} ${coin.symbol.toUpperCase()}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-right">
-                            <div class="text-sm font-bold">$${itemValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            <div class="text-[10px] ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'} font-medium">
-                                ${coin.change >= 0 ? '+' : ''}${typeof coin.change === 'number' ? coin.change.toFixed(2) : coin.change}%
-                            </div>
-                        </div>
-                        <button class="remove-portfolio-item p-1.5 rounded-lg lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all" data-id="${coin.id}">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        container.innerHTML = html || '<p class="text-xs text-slate-500 dark:text-dark-muted">No assets in portfolio.</p>';
         totalValueEl.innerText = `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-        const totalChangePct = totalValue > 0 ? (totalChange24h / (totalValue - totalChange24h)) * 100 : 0;
         changeEl.innerText = `${totalChange24h >= 0 ? '+$' : '-$'}${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${totalChangePct.toFixed(2)}%)`;
-        changeEl.className = `text-sm font-medium ${totalChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`;
+        changeEl.className = `text-sm font-bold ${totalChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`;
+
+        if (totalProfitEl) {
+            totalProfitEl.innerText = `${totalProfit >= 0 ? '+$' : '-$'}${Math.abs(totalProfit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            totalProfitEl.className = `text-sm font-bold ${totalProfit >= 0 ? 'text-green-500' : 'text-red-500'}`;
+        }
+
+        if (assetCountEl) assetCountEl.innerText = portfolioItems.length;
+        if (lastUpdatedEl) lastUpdatedEl.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         this.renderAllocationBar(portfolioItems, allCoins, totalValue);
         lucide.createIcons();
     },
 
     renderAllocationBar(portfolioItems, allCoins, totalValue) {
-        const bar = document.querySelector('#portfolio .flex.h-2');
+        const bar = document.getElementById('portfolio-allocation-bar');
+        const label = document.getElementById('portfolio-allocation-label');
         if (!bar) return;
 
         if (totalValue === 0) {
             bar.innerHTML = '<div class="bg-slate-200 dark:bg-slate-700 w-full"></div>';
+            if (label) label.innerText = 'Empty';
             return;
         }
 
@@ -241,9 +233,15 @@ export const UI = {
 
         bar.innerHTML = sortedItems.map((item, i) => {
             const pct = (item.value / totalValue) * 100;
-            if (pct < 1) return '';
+            if (pct < 0.5) return '';
             return `<div class="${colors[i % colors.length]}" style="width: ${pct}%" title="${item.id}: ${pct.toFixed(1)}%"></div>`;
         }).join('');
+
+        if (label) {
+            if (sortedItems.length === 1) label.innerText = 'Concentrated';
+            else if (sortedItems.length <= 3) label.innerText = 'Balanced';
+            else label.innerText = 'Diversified';
+        }
     },
 
     renderWatchlist(allCoins, watchlistIds) {
@@ -318,6 +316,57 @@ export const UI = {
         `).join('');
         container.classList.remove('hidden');
         lucide.createIcons();
+    },
+
+    renderPortfolioSearchResults(results) {
+        const container = document.getElementById('modal-search-results');
+        if (!container) return;
+
+        if (results.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.innerHTML = results.map(coin => `
+            <div class="flex items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-dark-border last:border-none select-portfolio-asset-btn" data-id="${coin.id}" data-name="${coin.name}" data-symbol="${coin.symbol}" data-image="${coin.image}">
+                <img src="${coin.image}" class="w-8 h-8 rounded-full">
+                <div>
+                    <div class="text-sm font-bold">${coin.name}</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${coin.symbol}</div>
+                </div>
+                <div class="ml-auto text-xs font-bold text-slate-400">
+                    $${coin.price.toLocaleString()}
+                </div>
+            </div>
+        `).join('');
+        container.classList.remove('hidden');
+    },
+
+    updateAssetPreview(coin) {
+        const preview = document.getElementById('selected-asset-preview');
+        if (!preview) return;
+
+        if (!coin) {
+            preview.classList.add('hidden');
+            return;
+        }
+
+        preview.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="${coin.image}" class="w-8 h-8 rounded-full">
+                    <div>
+                        <div class="text-sm font-bold">${coin.name}</div>
+                        <div class="text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase tracking-widest">${coin.symbol}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-slate-500 dark:text-dark-muted font-bold uppercase tracking-widest mb-0.5">Current Price</div>
+                    <div class="text-sm font-black">$${coin.price.toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+        preview.classList.remove('hidden');
     },
 
     renderFearAndGreed(data) {
@@ -460,6 +509,322 @@ export const UI = {
             'DOT': 'BINANCE:DOTUSDT'
         };
         return mapping[coinSymbol.toUpperCase()] || `BINANCE:${coinSymbol.toUpperCase()}USDT`;
+    },
+
+    renderPortfolioCharts(portfolioItems, allCoins, totalValue) {
+        const allocationCanvas = document.getElementById('allocation-chart');
+        const plCanvas = document.getElementById('pl-chart');
+
+        if (!allocationCanvas || !plCanvas) return;
+
+        const data = portfolioItems.map(item => {
+            const coin = allCoins.find(c => c.id === item.id);
+            if (!coin) return null;
+            const currentValue = item.amount * coin.price;
+            const profit = currentValue - (item.amount * item.buyPrice);
+            return { symbol: coin.symbol, value: currentValue, profit, name: coin.name };
+        }).filter(Boolean).sort((a, b) => b.value - a.value);
+
+        if (this.allocationChartInstance) this.allocationChartInstance.destroy();
+        if (this.plChartInstance) this.plChartInstance.destroy();
+
+        const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#6366f1', '#8b5cf6', '#06b6d4', '#f43f5e'];
+
+        // Allocation Doughnut Chart
+        this.allocationChartInstance = new Chart(allocationCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.symbol),
+                datasets: [{
+                    data: data.map(d => d.value),
+                    backgroundColor: colors,
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 10, weight: 'bold' },
+                            color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const val = context.raw;
+                                const pct = (val / totalValue) * 100;
+                                return ` $${val.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${pct.toFixed(1)}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Profit/Loss Bar Chart
+        this.plChartInstance = new Chart(plCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.symbol),
+                datasets: [{
+                    data: data.map(d => d.profit),
+                    backgroundColor: data.map(d => d.profit >= 0 ? '#10b981' : '#ef4444'),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => ` ${context.raw >= 0 ? '+' : ''}$${context.raw.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                        ticks: { color: '#94a3b8', font: { size: 10 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    },
+
+    renderHoldingsTable(portfolioItems, allCoins, totalValue) {
+        const table = document.getElementById('holdings-table');
+        if (!table) return;
+
+        let data = portfolioItems.map(item => {
+            const coin = allCoins.find(c => c.id === item.id);
+            if (!coin) return null;
+
+            const currentPrice = coin.price;
+            const quantity = item.amount;
+            const costBasis = item.buyPrice;
+            const totalCost = quantity * costBasis;
+            const currentValue = quantity * currentPrice;
+            const profit = currentValue - totalCost;
+            const profitPct = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+            const allocation = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
+
+            return {
+                ...item,
+                coin,
+                currentPrice,
+                totalCost,
+                currentValue,
+                profit,
+                profitPct,
+                allocation
+            };
+        }).filter(Boolean);
+
+        const searchInput = document.getElementById('holdings-search');
+        const query = searchInput ? searchInput.value.toLowerCase() : '';
+        let filteredData = data.filter(item =>
+            item.coin.name.toLowerCase().includes(query) ||
+            item.coin.symbol.toLowerCase().includes(query)
+        );
+
+        // Persistent Sorting
+        if (window.holdingsSortKey) {
+            filteredData.sort((a, b) => {
+                let valA, valB;
+                switch(window.holdingsSortKey) {
+                    case 'name': valA = a.coin.name; valB = b.coin.name; break;
+                    case 'price': valA = a.currentPrice; valB = b.currentPrice; break;
+                    case 'holdings': valA = a.amount; valB = b.amount; break;
+                    case 'cost': valA = a.totalCost; valB = b.totalCost; break;
+                    case 'value': valA = a.currentValue; valB = b.currentValue; break;
+                    case 'profit': valA = a.profit; valB = b.profit; break;
+                    case 'allocation': valA = a.allocation; valB = b.allocation; break;
+                    default: valA = 0; valB = 0;
+                }
+                if (window.holdingsSortOrder === 'asc') return valA > valB ? 1 : -1;
+                return valA < valB ? 1 : -1;
+            });
+        }
+
+        const sortIcon = (key) => {
+            if (window.holdingsSortKey !== key) return '<i data-lucide="chevrons-up-down" class="w-3 h-3 inline-block ml-1 opacity-20"></i>';
+            return window.holdingsSortOrder === 'asc'
+                ? '<i data-lucide="chevron-up" class="w-3 h-3 inline-block ml-1 text-blue-500"></i>'
+                : '<i data-lucide="chevron-down" class="w-3 h-3 inline-block ml-1 text-blue-500"></i>';
+        };
+
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th class="cursor-pointer group" data-sort="name">
+                        Asset ${sortIcon('name')}
+                    </th>
+                    <th class="text-right cursor-pointer group" data-sort="price">
+                        Price ${sortIcon('price')}
+                    </th>
+                    <th class="text-right cursor-pointer group" data-sort="holdings">
+                        Holdings ${sortIcon('holdings')}
+                    </th>
+                    <th class="text-right cursor-pointer group" data-sort="cost">
+                        Cost Basis ${sortIcon('cost')}
+                    </th>
+                    <th class="text-right cursor-pointer group" data-sort="value">
+                        Value ${sortIcon('value')}
+                    </th>
+                    <th class="text-right cursor-pointer group" data-sort="profit">
+                        Profit/Loss ${sortIcon('profit')}
+                    </th>
+                    <th class="text-right cursor-pointer group" data-sort="allocation">
+                        Allocation ${sortIcon('allocation')}
+                    </th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 dark:divide-dark-border/50">
+                ${filteredData.map(item => `
+                    <tr class="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <img src="${item.coin.image}" class="w-8 h-8 rounded-full">
+                                <div>
+                                    <div class="font-bold text-slate-900 dark:text-white">${item.coin.name}</div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${item.coin.symbol}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div class="font-bold">$${item.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                            <div class="text-[10px] font-bold ${item.coin.change >= 0 ? 'text-green-500' : 'text-red-500'}">
+                                ${item.coin.change >= 0 ? '+' : ''}${item.coin.change.toFixed(2)}%
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div class="font-bold">${item.amount.toLocaleString()} ${item.coin.symbol}</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quantity</div>
+                        </td>
+                        <td class="text-right">
+                            <div class="font-bold">$${item.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">$${item.buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} avg</div>
+                        </td>
+                        <td class="text-right">
+                            <div class="font-bold">$${item.currentValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Current Value</div>
+                        </td>
+                        <td class="text-right">
+                            <div class="font-bold ${item.profit >= 0 ? 'text-green-500' : 'text-red-500'}">
+                                ${item.profit >= 0 ? '+' : '-'}$${Math.abs(item.profit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </div>
+                            <div class="text-[10px] font-bold ${item.profitPct >= 0 ? 'text-green-500' : 'text-red-500'}">
+                                ${item.profitPct >= 0 ? '+' : ''}${item.profitPct.toFixed(2)}%
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div class="font-bold">${item.allocation.toFixed(2)}%</div>
+                            <div class="w-16 h-1 bg-slate-100 dark:bg-slate-800 rounded-full ml-auto mt-1 overflow-hidden">
+                                <div class="h-full bg-blue-500" style="width: ${item.allocation}%"></div>
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button class="edit-asset-btn p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 transition-all" data-id="${item.id}">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button class="delete-asset-btn p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-all" data-id="${item.id}">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        lucide.createIcons();
+    },
+
+    renderPortfolioPanel(portfolioItems, allCoins) {
+        const statsGrid = document.getElementById('panel-stats-grid');
+        const holdingsCount = document.getElementById('holdings-count');
+        const emptyState = document.getElementById('holdings-empty-state');
+        const holdingsTable = document.getElementById('holdings-table');
+
+        if (!statsGrid) return;
+
+        let totalValue = 0;
+        let totalCost = 0;
+        let totalChange24h = 0;
+        let bestAsset = { id: '', performance: -Infinity };
+        let worstAsset = { id: '', performance: Infinity };
+
+        portfolioItems.forEach(item => {
+            const coin = allCoins.find(c => c.id === item.id);
+            if (!coin) return;
+
+            const itemValue = coin.price * item.amount;
+            const itemCost = item.buyPrice * item.amount;
+            const itemProfit = itemValue - itemCost;
+            const itemPerformance = itemCost > 0 ? (itemProfit / itemCost) * 100 : 0;
+
+            totalValue += itemValue;
+            totalCost += itemCost;
+            totalChange24h += (coin.price_change_24h || 0) * item.amount;
+
+            if (itemPerformance > bestAsset.performance) {
+                bestAsset = { id: coin.name, performance: itemPerformance };
+            }
+            if (itemPerformance < worstAsset.performance) {
+                worstAsset = { id: coin.name, performance: itemPerformance };
+            }
+        });
+
+        const unrealizedPL = totalValue - totalCost;
+        const unrealizedPLPct = totalCost > 0 ? (unrealizedPL / totalCost) * 100 : 0;
+
+        const stats = [
+            { label: 'Total Value', value: `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: '', color: '' },
+            { label: 'Total Cost Basis', value: `$${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: '', color: 'text-slate-400' },
+            { label: 'Unrealized P/L', value: `${unrealizedPL >= 0 ? '+' : '-'}$${Math.abs(unrealizedPL).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: `${unrealizedPLPct.toFixed(2)}%`, color: unrealizedPL >= 0 ? 'text-green-500' : 'text-red-500' },
+            { label: 'Today\'s P/L', value: `${totalChange24h >= 0 ? '+' : '-'}$${Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, subValue: '', color: totalChange24h >= 0 ? 'text-green-500' : 'text-red-500' },
+            { label: 'Best Performing', value: bestAsset.id || 'N/A', subValue: bestAsset.id ? `${bestAsset.performance.toFixed(2)}%` : '', color: 'text-green-500' },
+            { label: 'Worst Performing', value: worstAsset.id || 'N/A', subValue: worstAsset.id ? `${worstAsset.performance.toFixed(2)}%` : '', color: 'text-red-500' },
+            { label: 'Holdings', value: portfolioItems.length, subValue: 'Assets', color: 'text-blue-500' },
+            { label: 'Total Return', value: `${unrealizedPLPct.toFixed(2)}%`, subValue: 'Lifetime', color: unrealizedPLPct >= 0 ? 'text-green-500' : 'text-red-500' }
+        ];
+
+        statsGrid.innerHTML = stats.map(stat => `
+            <div class="bg-slate-50 dark:bg-dark-card rounded-2xl p-5 border border-slate-200 dark:border-dark-border">
+                <p class="text-[10px] font-bold text-slate-400 dark:text-dark-muted uppercase tracking-widest mb-2">${stat.label}</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-black ${stat.color}">${stat.value}</span>
+                    ${stat.subValue ? `<span class="text-xs font-bold ${stat.color} opacity-70">${stat.subValue}</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+
+        if (holdingsCount) holdingsCount.innerText = `${portfolioItems.length} Assets`;
+
+        if (portfolioItems.length === 0) {
+            emptyState.classList.remove('hidden');
+            holdingsTable.classList.add('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+            holdingsTable.classList.remove('hidden');
+            this.renderHoldingsTable(portfolioItems, allCoins, totalValue);
+            this.renderPortfolioCharts(portfolioItems, allCoins, totalValue);
+        }
+
+        lucide.createIcons();
     },
 
     showNotification(message, type = 'info') {
