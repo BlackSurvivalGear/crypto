@@ -526,114 +526,137 @@ export const UI = {
             return { symbol: coin.symbol, value: currentValue, profit, profitPct, name: coin.name, image: coin.image };
         }).filter(Boolean).sort((a, b) => b.value - a.value);
 
-        if (this.allocationChartInstance) this.allocationChartInstance.destroy();
-        if (this.plChartInstance) this.plChartInstance.destroy();
-
-        const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#6366f1', '#8b5cf6', '#06b6d4', '#f43f5e'];
-
-        // Allocation Doughnut Chart
-        this.allocationChartInstance = new Chart(allocationCanvas.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: data.map(d => d.symbol),
-                datasets: [{
-                    data: data.map(d => d.value),
-                    backgroundColor: colors,
-                    borderWidth: 0,
-                    hoverOffset: 15
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: { size: 11, weight: '600' },
-                            color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                        titleColor: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
-                        bodyColor: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        borderWidth: 1,
-                        padding: 12,
-                        boxPadding: 6,
-                        callbacks: {
-                            label: (context) => {
-                                const d = data[context.dataIndex];
-                                const pct = (d.value / totalValue) * 100;
-                                return [
-                                    ` Value: $${d.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-                                    ` Allocation: ${pct.toFixed(1)}%`,
-                                    ` P/L: ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Profit/Loss Bar Chart (Horizontal)
-        const plSortedData = [...data].sort((a, b) => b.profit - a.profit);
-        this.plChartInstance = new Chart(plCanvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: plSortedData.map(d => d.symbol),
-                datasets: [{
-                    data: plSortedData.map(d => d.profit),
-                    backgroundColor: plSortedData.map(d => d.profit >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
-                    borderColor: plSortedData.map(d => d.profit >= 0 ? '#10b981' : '#ef4444'),
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    barThickness: 20
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                const d = plSortedData[context.dataIndex];
-                                return ` ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${d.profitPct.toFixed(2)}%)`;
-                            }
-                        }
-                    }
+        if (this.allocationChartInstance) {
+            this.allocationChartInstance.data.labels = data.map(d => d.symbol);
+            this.allocationChartInstance.data.datasets[0].data = data.map(d => d.value);
+            this.allocationChartInstance.options.plugins.tooltip.callbacks.label = (context) => {
+                const d = data[context.dataIndex];
+                const pct = (d.value / totalValue) * 100;
+                return [
+                    ` Value: $${d.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                    ` Allocation: ${pct.toFixed(1)}%`,
+                    ` P/L: ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                ];
+            };
+            this.allocationChartInstance.update();
+        } else {
+            const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#6366f1', '#8b5cf6', '#06b6d4', '#f43f5e'];
+            this.allocationChartInstance = new Chart(allocationCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.symbol),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
                 },
-                scales: {
-                    x: {
-                        grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-                        ticks: {
-                            color: '#94a3b8',
-                            font: { size: 10 },
-                            callback: (val) => '$' + UI.formatNumber(val)
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 11, weight: '600' },
+                                color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                            titleColor: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
+                            bodyColor: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            callbacks: {
+                                label: (context) => {
+                                    const d = data[context.dataIndex];
+                                    const pct = (d.value / totalValue) * 100;
+                                    return [
+                                        ` Value: $${d.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                                        ` Allocation: ${pct.toFixed(1)}%`,
+                                        ` P/L: ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                    ];
+                                }
+                            }
                         }
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        const plSortedData = [...data].sort((a, b) => b.profit - a.profit);
+        if (this.plChartInstance) {
+            this.plChartInstance.data.labels = plSortedData.map(d => d.symbol);
+            this.plChartInstance.data.datasets[0].data = plSortedData.map(d => d.profit);
+            this.plChartInstance.data.datasets[0].backgroundColor = plSortedData.map(d => d.profit >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+            this.plChartInstance.data.datasets[0].borderColor = plSortedData.map(d => d.profit >= 0 ? '#10b981' : '#ef4444');
+            this.plChartInstance.update();
+        } else {
+            this.plChartInstance = new Chart(plCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: plSortedData.map(d => d.symbol),
+                    datasets: [{
+                        data: plSortedData.map(d => d.profit),
+                        backgroundColor: plSortedData.map(d => d.profit >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                        borderColor: plSortedData.map(d => d.profit >= 0 ? '#10b981' : '#ef4444'),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const d = plSortedData[context.dataIndex];
+                                    return ` ${d.profit >= 0 ? '+' : ''}$${d.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${d.profitPct.toFixed(2)}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { size: 10 },
+                                callback: (val) => '$' + UI.formatNumber(val)
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
     },
 
     renderPerformanceChart(historyData) {
         const canvas = document.getElementById('portfolio-performance-chart');
         if (!canvas) return;
 
-        if (this.performanceChartInstance) this.performanceChartInstance.destroy();
-
         const isDark = document.documentElement.classList.contains('dark');
+
+        if (this.performanceChartInstance) {
+            this.performanceChartInstance.data.labels = historyData.map(d => d.date);
+            this.performanceChartInstance.data.datasets[0].data = historyData.map(d => d.value);
+            this.performanceChartInstance.update();
+            return;
+        }
+
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
@@ -806,25 +829,30 @@ export const UI = {
         labelEl.style.color = color;
         descEl.innerText = desc;
 
-        if (this.riskChartInstance) this.riskChartInstance.destroy();
-        this.riskChartInstance = new Chart(canvas.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: [score, 100 - score],
-                    backgroundColor: [color, document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f3f6'],
-                    borderWidth: 0,
-                    circumference: 270,
-                    rotation: 225,
-                    borderRadius: 10
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                cutout: '85%',
-                plugins: { legend: { display: false }, tooltip: { enabled: false } }
-            }
-        });
+        if (this.riskChartInstance) {
+            this.riskChartInstance.data.datasets[0].data = [score, 100 - score];
+            this.riskChartInstance.data.datasets[0].backgroundColor[0] = color;
+            this.riskChartInstance.update();
+        } else {
+            this.riskChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [score, 100 - score],
+                        backgroundColor: [color, document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f3f6'],
+                        borderWidth: 0,
+                        circumference: 270,
+                        rotation: 225,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '85%',
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
+            });
+        }
     },
 
     renderSectorAllocation(portfolioItems, allCoins, totalValue) {
@@ -866,7 +894,12 @@ export const UI = {
             .map(([name, info]) => ({ name, value: info.value, count: info.count, pct: (info.value / totalValue) * 100 }))
             .sort((a, b) => b.value - a.value);
 
-        if (this.sectorChartInstance) this.sectorChartInstance.destroy();
+        if (this.sectorChartInstance) {
+            this.sectorChartInstance.data.labels = data.map(d => d.name);
+            this.sectorChartInstance.data.datasets[0].data = data.map(d => d.value);
+            this.sectorChartInstance.update();
+            return;
+        }
 
         this.sectorChartInstance = new Chart(canvas.getContext('2d'), {
             type: 'doughnut',
@@ -1120,10 +1153,10 @@ export const UI = {
         ];
 
         statsGrid.innerHTML = stats.map(stat => `
-            <div class="bg-white dark:bg-dark-card rounded-2xl p-4 border border-slate-200 dark:border-dark-border min-w-[160px] shadow-sm">
-                <p class="text-[10px] font-bold text-slate-400 dark:text-dark-muted uppercase tracking-widest mb-1">${stat.label}</p>
+            <div class="bg-white/50 dark:bg-dark-card/50 backdrop-blur-md rounded-[20px] p-6 border border-white/10 dark:border-dark-border shadow-sm hover:scale-[1.02] transition-transform">
+                <p class="text-[10px] font-bold text-slate-500 dark:text-dark-muted uppercase tracking-[0.15em] mb-2">${stat.label}</p>
                 <div class="flex items-baseline gap-1">
-                    <span id="${stat.id}" class="text-lg font-black ${stat.color}">--</span>
+                    <span id="${stat.id}" class="text-xl font-black ${stat.color}">--</span>
                 </div>
             </div>
         `).join('');

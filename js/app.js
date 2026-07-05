@@ -262,6 +262,11 @@ function setupInteractivity() {
         openPortfolioPanel();
     });
 
+    // Handle backdrop clicks to close
+    if (portfolioOverlay) {
+        portfolioOverlay.addEventListener('click', closePortfolioPanel);
+    }
+
     // Portfolio Timeframe Buttons
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('.portfolio-timeframe-btn');
