@@ -2,6 +2,8 @@
 import { API } from './api.js';
 import { Store } from './store.js';
 import { UI } from './ui.js';
+import { WhaleAPI } from './whale-api.js';
+import { WhaleUI } from './whale-ui.js';
 
 const COINS = [
     { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 64125.40, change: 2.45, cap: '1.26T', vol: '32.1B', icon: 'bitcoin', color: 'text-orange-500' },
@@ -18,14 +20,137 @@ const NEWS = [
     { title: 'New Regulation Proposed for Stablecoins', source: 'Reuters', time: '8h ago', sentiment: 'bearish' }
 ];
 
-const PORTFOLIO = [
-    { id: 'bitcoin', amount: 0.15, value: 9618.81 },
-    { id: 'ethereum', amount: 0.8, value: 2761.68 },
-    { id: 'solana', amount: 5, value: 726.00 }
-];
-
 let allCoins = [];
 window.allCoins = allCoins;
+
+/**
+ * Whale Watch Orchestrator
+ */
+const WhaleOrchestrator = {
+    currentMinThreshold: 1000000,
+    currentChain: 'all',
+    searchQuery: '',
+    refreshInterval: null,
+
+    async init() {
+        // Initial data fetch
+        await this.refreshData();
+
+        // Setup periodic refresh (30s)
+        this.refreshInterval = setInterval(() => this.refreshData(), 30000);
+
+        // Setup event listeners
+        this.setupListeners();
+    },
+
+    async refreshData() {
+        try {
+            const data = await WhaleAPI.getWhaleTransactions();
+
+            // Classification and stats calculation
+            const stats = WhaleAPI.calculateStats(data.transactions);
+
+            // Filter data based on UI state
+            const filtered = data.transactions.filter(tx => {
+                const matchesThreshold = tx.amount_usd >= this.currentMinThreshold;
+                const matchesChain = this.currentChain === 'all' || tx.blockchain.toLowerCase() === this.currentChain.toLowerCase();
+                const matchesSearch = !this.searchQuery ||
+                    tx.hash.toLowerCase().includes(this.searchQuery) ||
+                    (tx.from_wallet && tx.from_wallet.name && tx.from_wallet.name.toLowerCase().includes(this.searchQuery)) ||
+                    (tx.to_wallet && tx.to_wallet.name && tx.to_wallet.name.toLowerCase().includes(this.searchQuery));
+
+                return matchesThreshold && matchesChain && matchesSearch;
+            });
+
+            // Update UI
+            WhaleUI.renderSummaryCards(stats);
+            WhaleUI.renderLiveFeed(filtered);
+            WhaleUI.renderCharts(data.transactions); // Use all transactions for distribution charts
+            WhaleUI.renderAISummary(data.transactions);
+
+            // Trigger alerts for high value txs (> $10M) if new
+            const highValueTxs = filtered.filter(tx => tx.amount_usd >= 10000000);
+            if (highValueTxs.length > 0) {
+                // Check if we already alerted for the top transaction in this session
+                const topTx = highValueTxs[0];
+                if (this.lastAlertedHash !== topTx.hash) {
+                    UI.showNotification(`🚨 WHALE ALERT: $${(topTx.amount_usd/1e6).toFixed(1)}M ${topTx.symbol.toUpperCase()} moved!`, 'warning');
+                    this.lastAlertedHash = topTx.hash;
+                }
+            }
+
+        } catch (error) {
+            console.error('Whale data refresh failed:', error);
+        }
+    },
+
+    setupListeners() {
+        // Nav switching
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                UI.switchView(view);
+                if (view === 'whale') this.refreshData();
+            });
+        });
+
+        // Mobile Portfolio Button
+        const mobilePortfolioBtn = document.getElementById('mobile-manage-portfolio');
+        if (mobilePortfolioBtn) {
+            mobilePortfolioBtn.addEventListener('click', () => {
+                const openPortfolioPanel = () => {
+                    document.body.classList.add('panel-open');
+                    const portfolio = Store.getPortfolio();
+                    UI.renderPortfolioPanel(portfolio, allCoins);
+                    updatePortfolioPerformance(portfolio);
+                };
+                openPortfolioPanel();
+            });
+        }
+
+        // Threshold buttons
+        document.querySelectorAll('.whale-threshold-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.whale-threshold-btn').forEach(b => b.classList.remove('bg-white', 'dark:bg-dark-bg', 'shadow-sm'));
+                btn.classList.add('bg-white', 'dark:bg-dark-bg', 'shadow-sm');
+                this.currentMinThreshold = parseInt(btn.dataset.min);
+                this.refreshData();
+            });
+        });
+
+        // Chain filter
+        const chainFilter = document.getElementById('whale-chain-filter');
+        if (chainFilter) {
+            chainFilter.addEventListener('change', (e) => {
+                this.currentChain = e.target.value;
+                this.refreshData();
+            });
+        }
+
+        // Search
+        const searchInput = document.getElementById('whale-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchQuery = e.target.value.toLowerCase();
+                this.refreshData();
+            });
+        }
+
+        // Feed item click (Detail Panel)
+        document.getElementById('whale-feed').addEventListener('click', (e) => {
+            const item = e.target.closest('.whale-feed-item');
+            if (item) {
+                const hash = item.dataset.hash;
+                const tx = WhaleAPI.transactions.find(t => t.hash === hash);
+                if (tx) WhaleUI.openDetailPanel(tx);
+            }
+        });
+
+        // Close panels
+        document.getElementById('close-whale-panel').addEventListener('click', () => WhaleUI.closeDetailPanel());
+        document.getElementById('whale-panel-overlay').addEventListener('click', () => WhaleUI.closeDetailPanel());
+    }
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
@@ -42,6 +167,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     UI.initMainChart('BTC');
 
     setupInteractivity();
+
+    // Init Whale Orchestrator
+    WhaleOrchestrator.init();
 
     // Load live data
     await loadDashboardData();
@@ -61,7 +189,6 @@ async function updatePortfolioPerformance(portfolio, days = 30) {
         const historicalResults = await Promise.all(historicalPromises);
 
         // Aggregate daily values
-        // Note: CoinGecko returns data in [timestamp, price] format
         const minPoints = Math.min(...historicalResults.map(res => res.prices.length));
 
         const aggregatedHistory = [];
@@ -158,12 +285,21 @@ function updateGlobalStats(coins) {
 
 // Theme Toggle
 const themeToggle = document.getElementById('theme-toggle');
-if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-        const isDark = document.documentElement.classList.toggle('dark');
-        Store.setTheme(isDark ? 'dark' : 'light');
-    });
-}
+const themeToggleWhale = document.getElementById('theme-toggle-whale');
+
+const toggleTheme = () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    Store.setTheme(isDark ? 'dark' : 'light');
+
+    // Re-render charts if they exist to update colors
+    if (window.allCoins && Store.getWatchlist()) {
+        UI.renderMarketCards(window.allCoins, Store.getWatchlist());
+    }
+    if (WhaleUI.charts.chain) WhaleUI.renderCharts(WhaleAPI.transactions);
+};
+
+if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+if (themeToggleWhale) themeToggleWhale.addEventListener('click', toggleTheme);
 
 function setupInteractivity() {
     // Asset Search
