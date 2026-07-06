@@ -1119,7 +1119,7 @@ export const UI = {
         window.requestAnimationFrame(step);
     },
 
-    switchView(view) {
+    switchView(view, updateHash = true) {
         const marketView = document.getElementById('market-view');
         const whaleView = document.getElementById('whale-view');
         const navItems = document.querySelectorAll('.nav-item');
@@ -1127,9 +1127,11 @@ export const UI = {
         if (view === 'whale') {
             marketView.classList.add('hidden');
             whaleView.classList.remove('hidden');
+            if (updateHash) window.location.hash = 'whale';
         } else {
             marketView.classList.remove('hidden');
             whaleView.classList.add('hidden');
+            if (updateHash) window.location.hash = 'market';
         }
 
         // Update Nav UI

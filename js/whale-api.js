@@ -4,12 +4,14 @@ export const WhaleAPI = {
     apiKey: '', // To be filled by user
     baseUrl: 'https://api.whale-alert.io/v1',
     transactions: [],
+    status: 'mock', // 'live', 'mock', 'offline'
 
     // Main data fetcher
     async getWhaleTransactions(min_value = 500000) {
         let txs = [];
         if (!this.apiKey) {
             txs = this.getMockTransactions(min_value);
+            this.status = 'mock';
         } else {
             try {
                 const response = await fetch(`${this.baseUrl}/transactions?api_key=${this.apiKey}&min_value=${min_value}`);
@@ -18,9 +20,11 @@ export const WhaleAPI = {
                 }
                 const data = await response.json();
                 txs = data.transactions || [];
+                this.status = 'live';
             } catch (error) {
                 console.error('Whale Alert API Error:', error);
                 txs = this.getMockTransactions(min_value);
+                this.status = 'offline';
             }
         }
 

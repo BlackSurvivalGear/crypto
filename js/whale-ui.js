@@ -4,6 +4,28 @@ import { UI } from './ui.js';
 export const WhaleUI = {
     charts: {},
 
+    updateStatusBadge(status) {
+        const badge = document.getElementById('whale-live-status');
+        if (!badge) return;
+
+        let html = '';
+        switch(status) {
+            case 'live':
+                badge.className = 'flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-bold border border-emerald-500/20';
+                html = '<div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> LIVE FEED ACTIVE';
+                break;
+            case 'mock':
+                badge.className = 'flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-500 rounded-full text-xs font-bold border border-blue-500/20';
+                html = '<div class="w-2 h-2 rounded-full bg-blue-500"></div> MOCK DATA ACTIVE';
+                break;
+            case 'offline':
+                badge.className = 'flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-full text-xs font-bold border border-red-500/20';
+                html = '<div class="w-2 h-2 rounded-full bg-red-500"></div> API OFFLINE (MOCK)';
+                break;
+        }
+        badge.innerHTML = html;
+    },
+
     renderSummaryCards(stats) {
         const summaryGrid = document.getElementById('whale-summary-cards');
         if (!summaryGrid) return;
@@ -23,6 +45,35 @@ export const WhaleUI = {
             <div class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-4 rounded-xl shadow-sm">
                 <div class="text-[10px] font-bold text-slate-500 dark:text-dark-muted uppercase tracking-wider mb-1">${card.label}</div>
                 <div class="text-lg font-black ${card.color}">${card.value}</div>
+            </div>
+        `).join('');
+    },
+
+    showLoadingState() {
+        const feed = document.getElementById('whale-feed');
+        if (!feed) return;
+
+        feed.innerHTML = Array(5).fill(0).map(() => `
+            <div class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="w-10 h-10 rounded-xl skeleton flex-shrink-0"></div>
+                    <div class="space-y-2 flex-1">
+                        <div class="h-3 w-20 skeleton rounded"></div>
+                        <div class="h-4 w-32 skeleton rounded"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 md:gap-8 flex-1">
+                    <div class="flex-1 space-y-2">
+                        <div class="h-2 w-10 skeleton rounded"></div>
+                        <div class="h-3 w-24 skeleton rounded"></div>
+                    </div>
+                    <div class="w-4 h-4 skeleton rounded-full"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-2 w-10 skeleton rounded"></div>
+                        <div class="h-3 w-24 skeleton rounded"></div>
+                    </div>
+                </div>
+                <div class="w-20 h-6 skeleton rounded-lg"></div>
             </div>
         `).join('');
     },
