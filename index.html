@@ -73,6 +73,10 @@
             opacity: 1;
             pointer-events: auto;
         }
+        #whale-panel-overlay {
+            pointer-events: none;
+            display: none;
+        }
         .panel-open #portfolio-panel {
             opacity: 1;
             visibility: visible;
@@ -128,12 +132,86 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+
+        /* Whale Watch specific styles */
+        .whale-feed-item {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        #whale-details-panel {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .whale-panel-active #whale-details-panel {
+            transform: translateX(0);
+        }
+        .whale-panel-active #whale-panel-overlay {
+            opacity: 1;
+            pointer-events: auto;
+            display: block;
+        }
+        .tx-exchange-outflow { border-left: 4px solid #22c55e; }
+        .tx-wallet-to-wallet { border-left: 4px solid #3b82f6; }
+        .tx-large-transfer { border-left: 4px solid #f97316; }
+        .tx-exchange-inflow { border-left: 4px solid #ef4444; }
+        .tx-institutional { border-left: 4px solid #a855f7; }
+        .tx-government { border-left: 4px solid #eab308; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-dark-text transition-colors duration-200">
-    <div id="app" class="min-h-screen">
-        <!-- Notifications Container -->
-        <div id="notifications" class="fixed bottom-4 right-4 z-[130] space-y-2 pointer-events-none"></div>
+    <div id="app" class="min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <!-- Desktop Sidebar -->
+        <aside class="w-20 bg-white dark:bg-dark-card border-r border-slate-200 dark:border-dark-border flex flex-col items-center py-8 gap-8 sticky top-0 h-screen z-[100] hidden md:flex">
+            <div class="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 mb-4">
+                <i data-lucide="zap" class="w-6 h-6 text-white fill-white"></i>
+            </div>
+            <nav class="flex flex-col gap-4">
+                <button data-view="market" class="nav-item p-4 rounded-2xl transition-all group relative bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                    <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Market Overview</span>
+                </button>
+                <button data-view="whale" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
+                    <i data-lucide="eye" class="w-6 h-6"></i>
+                    <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Whale Watch</span>
+                </button>
+            </nav>
+            <div class="mt-auto flex flex-col gap-4">
+                <button class="p-4 text-slate-400 hover:text-blue-500 transition-colors">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                </button>
+                <button class="p-4 text-slate-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="log-out" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-card/80 backdrop-blur-xl border-t border-slate-200 dark:border-dark-border z-[100] flex items-center justify-around py-3 px-4">
+            <button data-view="market" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 bg-blue-600 text-white">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Market</span>
+            </button>
+            <button data-view="whale" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="eye" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Whales</span>
+            </button>
+            <button id="mobile-manage-portfolio" class="p-3 rounded-xl flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="briefcase" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Assets</span>
+            </button>
+            <button class="p-3 rounded-xl flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Settings</span>
+            </button>
+        </nav>
+
+        <div class="flex-1 flex flex-col min-w-0 pb-20 md:pb-0">
+            <!-- Notifications Container -->
+            <div id="notifications" class="fixed bottom-4 right-4 z-[130] space-y-2 pointer-events-none"></div>
 
         <!-- Portfolio Modal (Add/Edit Asset) -->
         <div id="portfolio-modal" class="fixed inset-0 z-[150] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -332,7 +410,7 @@
         </div>
 
         <!-- Global Stats Bar -->
-        <header id="global-stats" class="border-b border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card sticky top-0 z-50">
+        <header id="global-stats" class="border-b border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card sticky top-0 z-[60]">
             <div class="container mx-auto px-4 py-2 flex items-center justify-between text-xs font-medium">
                 <div class="flex items-center gap-6 overflow-x-auto whitespace-nowrap no-scrollbar">
                     <div class="flex gap-1.5">
@@ -372,175 +450,294 @@
             </div>
         </header>
 
-        <main class="container mx-auto px-4 py-6">
-            <!-- Header & Search -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 sticky top-[33px] z-40 bg-slate-50/80 dark:bg-dark-bg/80 backdrop-blur-md py-4">
-                <div>
-                    <h1 class="text-2xl font-bold">CryptoBlack Market Overview</h1>
-                    <p class="text-slate-500 dark:text-dark-muted">Real-time crypto market data</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                        <input type="text" id="asset-search" placeholder="Search assets..." class="pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all w-full md:w-64">
+        <main class="flex-1 min-w-0">
+            <!-- Market Overview View -->
+            <div id="market-view" class="container mx-auto px-4 py-6">
+                <!-- Header & Search -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 sticky top-[33px] z-40 bg-slate-50/80 dark:bg-dark-bg/80 backdrop-blur-md py-4">
+                    <div>
+                        <h1 class="text-2xl font-bold">CryptoBlack Market Overview</h1>
+                        <p class="text-slate-500 dark:text-dark-muted">Real-time crypto market data</p>
                     </div>
-                    <button id="theme-toggle" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
-                        <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
-                        <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" id="asset-search" placeholder="Search assets..." class="pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all w-full md:w-64">
+                        </div>
+                        <button id="theme-toggle" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                            <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:grid lg:grid-cols-3 gap-8">
+                    <!-- Top Cards -->
+                    <div id="market-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:col-span-3">
+                        <!-- Content will be injected here -->
+                    </div>
+
+                    <!-- Sidebar Area -->
+                    <div class="lg:space-y-8">
+                        <!-- Portfolio Tracker -->
+                        <section id="portfolio" class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6 cursor-pointer hover:border-blue-500/50 transition-all group relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h2 class="text-lg font-bold">Portfolio</h2>
+                                    <button id="manage-portfolio-btn" class="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">
+                                        Manage <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+                                <div class="text-3xl font-black mb-1" id="portfolio-value">$0.00</div>
+                                <div id="portfolio-stats-summary" class="space-y-3 mb-6">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold text-green-500" id="portfolio-change">+$0 (0.00%)</span>
+                                            <span class="text-[10px] text-slate-500 dark:text-dark-muted uppercase font-black tracking-widest">24h</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold" id="portfolio-total-profit">+$0</span>
+                                            <span class="text-[10px] text-slate-500 dark:text-dark-muted uppercase font-black tracking-widest">Total</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-400"></i>
+                                            <span class="text-xs font-semibold text-slate-600 dark:text-dark-muted"><span id="portfolio-asset-count">0</span> Assets</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[10px] text-slate-400 dark:text-dark-muted italic" id="portfolio-last-updated">Just now</span>
+                                            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-[10px] uppercase font-black tracking-widest text-slate-400 dark:text-dark-muted">
+                                        <span>Allocation</span>
+                                        <span class="text-blue-600 dark:text-blue-400" id="portfolio-allocation-label">Diversified</span>
+                                    </div>
+                                    <div id="portfolio-allocation-bar" class="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                        <!-- Allocation bar items -->
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Watchlist -->
+                        <section id="watchlist" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-semibold">Watchlist</h2>
+                                <div class="relative flex-1 max-w-[150px] ml-4">
+                                    <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400"></i>
+                                    <input type="text" id="watchlist-search" placeholder="Add coin..." class="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <div id="watchlist-search-results" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-lg shadow-xl z-[60] hidden max-h-48 overflow-y-auto no-scrollbar"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-4 mb-6" id="watchlist-items">
+                                <!-- Watchlist items will be injected here -->
+                            </div>
+                        </section>
+
+                        <!-- Market Sentiment -->
+                        <section id="sentiment" class="space-y-6">
+                            <!-- Fear & Greed Index -->
+                            <div id="fear-greed-card" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                                <h2 class="text-lg font-semibold mb-4">Fear & Greed Index</h2>
+                                <div id="fear-greed-content" class="flex flex-col items-center justify-center py-4">
+                                    <!-- Content will be injected here -->
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Crypto Bubbles Quick Access -->
+                        <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer"
+                           class="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/25 group">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="text-sm">Open Crypto Bubbles</div>
+                                    <div class="text-[10px] font-normal opacity-80">Interactive market visualization</div>
+                                </div>
+                            </div>
+                            <i data-lucide="external-link" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+
+                        <!-- News -->
+                        <section id="news" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-semibold">Market News</h2>
+                            </div>
+                            <div class="space-y-4" id="news-items">
+                                <!-- News items will be injected here -->
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Main Chart Area -->
+                    <div class="lg:col-span-2 lg:space-y-8">
+                        <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div id="chart-asset-icon" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                        <i data-lucide="bitcoin" class="w-6 h-6 text-orange-500"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="chart-asset-name" class="text-lg font-bold">Bitcoin</h3>
+                                        <div class="flex items-center gap-2">
+                                            <span id="chart-asset-price" class="text-2xl font-bold">$64,125.40</span>
+                                            <span id="chart-asset-change" class="text-sm font-semibold text-green-500">+2.45%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start">
+                                    <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1h">1H</button>
+                                    <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors bg-white dark:bg-dark-card shadow-sm" data-time="24h">24H</button>
+                                    <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="7d">7D</button>
+                                    <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="30d">30D</button>
+                                    <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1y">1Y</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div id="tv-chart-widget" class="h-full w-full"></div>
+                            </div>
+                        </section>
+
+                        <!-- Asset Table -->
+                        <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border overflow-hidden">
+                            <div class="p-6 border-b border-slate-200 dark:border-dark-border flex justify-between items-center">
+                                <h2 class="text-lg font-semibold">Assets</h2>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left" id="asset-table">
+                                    <!-- Table content will be injected here -->
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+
                 </div>
             </div>
 
-            <div class="flex flex-col lg:grid lg:grid-cols-3 gap-8">
-                <!-- Top Cards -->
-                <div id="market-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:col-span-3">
-                    <!-- Content will be injected here -->
+            <!-- Whale Watch View -->
+            <div id="whale-view" class="container mx-auto px-4 py-6 hidden">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 py-4">
+                    <div>
+                        <h1 class="text-2xl font-bold flex items-center gap-3">
+                            <i data-lucide="eye" class="w-8 h-8 text-blue-500"></i>
+                            Whale Watch Intelligence
+                        </h1>
+                        <p class="text-slate-500 dark:text-dark-muted">Real-time institutional transaction monitoring</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div id="whale-live-status" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-bold border border-emerald-500/20">
+                            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                            LIVE FEED ACTIVE
+                        </div>
+                        <button id="theme-toggle-whale" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                            <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Sidebar Area -->
-                <div class="lg:space-y-8">
-                    <!-- Portfolio Tracker -->
-                    <section id="portfolio" class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6 cursor-pointer hover:border-blue-500/50 transition-all group relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <h2 class="text-lg font-bold">Portfolio</h2>
-                                <button id="manage-portfolio-btn" class="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">
-                                    Manage <i data-lucide="chevron-right" class="w-3 h-3"></i>
-                                </button>
-                            </div>
-                            <div class="text-3xl font-black mb-1" id="portfolio-value">$0.00</div>
-                            <div id="portfolio-stats-summary" class="space-y-3 mb-6">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-sm font-bold text-green-500" id="portfolio-change">+$0 (0.00%)</span>
-                                        <span class="text-[10px] text-slate-500 dark:text-dark-muted uppercase font-black tracking-widest">24h</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-sm font-bold" id="portfolio-total-profit">+$0</span>
-                                        <span class="text-[10px] text-slate-500 dark:text-dark-muted uppercase font-black tracking-widest">Total</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span class="text-xs font-semibold text-slate-600 dark:text-dark-muted"><span id="portfolio-asset-count">0</span> Assets</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-[10px] text-slate-400 dark:text-dark-muted italic" id="portfolio-last-updated">Just now</span>
-                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-[10px] uppercase font-black tracking-widest text-slate-400 dark:text-dark-muted">
-                                    <span>Allocation</span>
-                                    <span class="text-blue-600 dark:text-blue-400" id="portfolio-allocation-label">Diversified</span>
-                                </div>
-                                <div id="portfolio-allocation-bar" class="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                    <!-- Allocation bar items -->
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Watchlist -->
-                    <section id="watchlist" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold">Watchlist</h2>
-                            <div class="relative flex-1 max-w-[150px] ml-4">
-                                <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400"></i>
-                                <input type="text" id="watchlist-search" placeholder="Add coin..." class="w-full pl-7 pr-2 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <div id="watchlist-search-results" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-lg shadow-xl z-[60] hidden max-h-48 overflow-y-auto no-scrollbar"></div>
-                            </div>
-                        </div>
-                        <div class="space-y-4 mb-6" id="watchlist-items">
-                            <!-- Watchlist items will be injected here -->
-                        </div>
-                    </section>
-
-                    <!-- Market Sentiment -->
-                    <section id="sentiment" class="space-y-6">
-                        <!-- Fear & Greed Index -->
-                        <div id="fear-greed-card" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                            <h2 class="text-lg font-semibold mb-4">Fear & Greed Index</h2>
-                            <div id="fear-greed-content" class="flex flex-col items-center justify-center py-4">
-                                <!-- Content will be injected here -->
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Crypto Bubbles Quick Access -->
-                    <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer"
-                       class="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/25 group">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="text-sm">Open Crypto Bubbles</div>
-                                <div class="text-[10px] font-normal opacity-80">Interactive market visualization</div>
-                            </div>
-                        </div>
-                        <i data-lucide="external-link" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                    </a>
-
-                    <!-- News -->
-                    <section id="news" class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold">Market News</h2>
-                        </div>
-                        <div class="space-y-4" id="news-items">
-                            <!-- News items will be injected here -->
-                        </div>
-                    </section>
+                <!-- Summary Cards -->
+                <div id="whale-summary-cards" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+                    <!-- Injected via whale-ui.js -->
                 </div>
 
-                <!-- Main Chart Area -->
-                <div class="lg:col-span-2 lg:space-y-8">
-                    <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-6">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                            <div class="flex items-center gap-4">
-                                <div id="chart-asset-icon" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                    <i data-lucide="bitcoin" class="w-6 h-6 text-orange-500"></i>
-                                </div>
-                                <div>
-                                    <h3 id="chart-asset-name" class="text-lg font-bold">Bitcoin</h3>
-                                    <div class="flex items-center gap-2">
-                                        <span id="chart-asset-price" class="text-2xl font-bold">$64,125.40</span>
-                                        <span id="chart-asset-change" class="text-sm font-semibold text-green-500">+2.45%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start">
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1h">1H</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors bg-white dark:bg-dark-card shadow-sm" data-time="24h">24H</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="7d">7D</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="30d">30D</button>
-                                <button class="timeframe-btn px-3 py-1 rounded-md text-xs font-medium transition-colors" data-time="1y">1Y</button>
-                            </div>
+                <!-- Filters & Controls -->
+                <div class="sticky top-[33px] z-40 bg-slate-50/80 dark:bg-dark-bg/80 backdrop-blur-md py-4 mb-8 border-y border-slate-200 dark:border-dark-border">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
+                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-min="500000">> $500K</button>
+                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-dark-bg shadow-sm" data-min="1000000">> $1M</button>
+                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-min="5000000">> $5M</button>
+                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-min="10000000">> $10M</button>
                         </div>
-                        <div class="chart-container">
-                            <div id="tv-chart-widget" class="h-full w-full"></div>
-                        </div>
-                    </section>
 
-                    <!-- Asset Table -->
-                    <section class="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border overflow-hidden">
-                        <div class="p-6 border-b border-slate-200 dark:border-dark-border flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">Assets</h2>
+                        <select id="whale-chain-filter" class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-xl px-4 py-2 text-xs font-bold focus:outline-none">
+                            <option value="all">All Networks</option>
+                            <option value="bitcoin">Bitcoin</option>
+                            <option value="ethereum">Ethereum</option>
+                            <option value="solana">Solana</option>
+                            <option value="bnb">BNB Chain</option>
+                            <option value="ripple">XRP</option>
+                            <option value="tron">Tron</option>
+                        </select>
+
+                        <div class="relative flex-1 min-w-[200px]">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" id="whale-search" placeholder="Search hash, wallet or exchange..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left" id="asset-table">
-                                <!-- Table content will be injected here -->
-                            </table>
-                        </div>
-                    </section>
+                    </div>
                 </div>
 
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Live Feed -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-black uppercase tracking-widest text-blue-500">Real-Time Intelligence Feed</h3>
+                            <span id="whale-feed-count" class="text-[10px] font-bold text-slate-400">Showing last 100 transactions</span>
+                        </div>
+                        <div id="whale-feed" class="space-y-3 max-h-[1200px] overflow-y-auto no-scrollbar pr-2">
+                            <!-- Transactions injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Side Analytics -->
+                    <div class="space-y-8">
+                        <!-- AI Intelligence Summary -->
+                        <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-4">Market Intelligence (AI)</h3>
+                            <div id="whale-ai-summary" class="space-y-4">
+                                <!-- AI summaries injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Chain Activity Chart -->
+                        <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Chain Distribution</h3>
+                            <div class="h-64">
+                                <canvas id="whale-chain-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Exchange Flows Chart -->
+                        <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Exchange Flows</h3>
+                            <div class="h-64">
+                                <canvas id="whale-flow-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
+
+        <!-- Whale Watch Details Slide-out Panel -->
+        <div id="whale-panel-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] opacity-0 pointer-events-none transition-opacity duration-300 hidden" style="display: none;"></div>
+        <aside id="whale-details-panel" class="fixed top-0 right-0 h-screen w-full max-w-lg bg-white dark:bg-dark-modal border-l border-slate-200 dark:border-dark-border z-[120] flex flex-col shadow-2xl">
+            <!-- Header -->
+            <div class="p-6 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold">Transaction Intelligence</h2>
+                    <p class="text-xs text-slate-500 dark:text-dark-muted font-medium" id="whale-panel-tx-id">0x000...000</p>
+                </div>
+                <button id="close-whale-panel" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div id="whale-panel-content" class="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+                <!-- Content injected here -->
+            </div>
+        </aside>
     </div>
 
     <script type="module" src="js/app.js"></script>

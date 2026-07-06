@@ -1119,6 +1119,31 @@ export const UI = {
         window.requestAnimationFrame(step);
     },
 
+    switchView(view) {
+        const marketView = document.getElementById('market-view');
+        const whaleView = document.getElementById('whale-view');
+        const navItems = document.querySelectorAll('.nav-item');
+
+        if (view === 'whale') {
+            marketView.classList.add('hidden');
+            whaleView.classList.remove('hidden');
+        } else {
+            marketView.classList.remove('hidden');
+            whaleView.classList.add('hidden');
+        }
+
+        // Update Nav UI
+        navItems.forEach(item => {
+            if (item.dataset.view === view) {
+                item.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/20');
+                item.classList.remove('text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-800');
+            } else {
+                item.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/20');
+                item.classList.add('text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-800');
+            }
+        });
+    },
+
     renderPortfolioPanel(portfolioItems, allCoins) {
         const statsGrid = document.getElementById('panel-stats-grid');
         const holdingsCount = document.getElementById('holdings-count');
