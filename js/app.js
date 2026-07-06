@@ -26,25 +26,33 @@ window.allCoins = allCoins;
 /**
  * Whale Watch Orchestrator
  */
-const WhaleOrchestrator = {
+const WhaleWatchOrchestrator = {
     currentMinThreshold: 1000000,
     currentChain: 'all',
     searchQuery: '',
     refreshInterval: null,
 
     async init() {
-        // Initial data fetch
-        await this.refreshData();
-
-        // Setup periodic refresh (30s)
-        this.refreshInterval = setInterval(() => this.refreshData(), 30000);
-
         // Setup event listeners
         this.setupListeners();
     },
 
-    async refreshData() {
+    startRefreshing() {
+        if (this.refreshInterval) return;
+        this.refreshData(true); // Show loading only on first start
+        this.refreshInterval = setInterval(() => this.refreshData(false), 30000);
+    },
+
+    stopRefreshing() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    },
+
+    async refreshData(showLoading = false) {
         try {
+            if (showLoading) WhaleUI.showLoadingState();
             const data = await WhaleAPI.getWhaleTransactions();
 
             // Classification and stats calculation
@@ -63,6 +71,7 @@ const WhaleOrchestrator = {
             });
 
             // Update UI
+            WhaleUI.updateStatusBadge(WhaleAPI.status);
             WhaleUI.renderSummaryCards(stats);
             WhaleUI.renderLiveFeed(filtered);
             WhaleUI.renderCharts(data.transactions); // Use all transactions for distribution charts
@@ -90,7 +99,11 @@ const WhaleOrchestrator = {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
                 UI.switchView(view);
-                if (view === 'whale') this.refreshData();
+                if (view === 'whale') {
+                    this.startRefreshing();
+                } else {
+                    this.stopRefreshing();
+                }
             });
         });
 
@@ -169,7 +182,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupInteractivity();
 
     // Init Whale Orchestrator
-    WhaleOrchestrator.init();
+    WhaleWatchOrchestrator.init();
+
+    // Initial View from Hash
+    const initialView = window.location.hash.substring(1) || 'market';
+    UI.switchView(initialView, false);
+    if (initialView === 'whale') {
+        WhaleWatchOrchestrator.startRefreshing();
+    } else {
+        WhaleWatchOrchestrator.stopRefreshing();
+    }
+
+    // Handle back/forward navigation
+    window.addEventListener('hashchange', () => {
+        const view = window.location.hash.substring(1) || 'market';
+        UI.switchView(view, false);
+        if (view === 'whale') {
+            WhaleWatchOrchestrator.startRefreshing();
+        } else {
+            WhaleWatchOrchestrator.stopRefreshing();
+        }
+    });
 
     // Load live data
     await loadDashboardData();
