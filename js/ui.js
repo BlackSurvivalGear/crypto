@@ -2,6 +2,103 @@
 export const UI = {
     currentCoinId: 'bitcoin',
 
+    renderIntelligenceBar(data) {
+        const prevData = window.lastIntelligenceData || {};
+        window.lastIntelligenceData = data;
+
+        const updateValue = (id, newValue, prevValue) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerText = newValue;
+            if (prevValue !== undefined && prevValue !== newValue) {
+                el.classList.remove('value-changed');
+                void el.offsetWidth; // Trigger reflow
+                el.classList.add('value-changed');
+            }
+        };
+
+        const els = {
+            statusDot: document.getElementById('ib-status-dot'),
+            statusValue: document.getElementById('ib-status-value'),
+            btcDom: document.getElementById('ib-btc-dom'),
+            btcDomChange: document.getElementById('ib-btc-dom-change'),
+            gasValue: document.getElementById('ib-gas-value'),
+            fngValue: document.getElementById('ib-fng-value'),
+            fngLabel: document.getElementById('ib-fng-label'),
+            fundingValue: document.getElementById('ib-funding-value'),
+            oiValue: document.getElementById('ib-oi-value'),
+            oiChange: document.getElementById('ib-oi-change'),
+            liqValue: document.getElementById('ib-liq-value'),
+            stableValue: document.getElementById('ib-stable-value'),
+            altValue: document.getElementById('ib-alt-value'),
+            scoreValue: document.getElementById('ib-score-value'),
+            updateTime: document.getElementById('ib-update-time')
+        };
+
+        if (!els.statusValue) return;
+
+        // Market Status
+        updateValue('ib-status-value', data.marketStatus, prevData.marketStatus);
+        const statusColor = data.marketStatus === 'Bullish' ? 'text-green-500' : (data.marketStatus === 'Bearish' ? 'text-red-500' : 'text-yellow-500');
+        const statusBg = data.marketStatus === 'Bullish' ? 'bg-green-500' : (data.marketStatus === 'Bearish' ? 'bg-red-500' : 'bg-yellow-500');
+        const statusGlow = data.marketStatus === 'Bullish' ? 'glow-green' : (data.marketStatus === 'Bearish' ? 'glow-red' : 'glow-yellow');
+        els.statusValue.className = `intelligence-bar-value ${statusColor} ${statusGlow}`;
+        els.statusDot.className = `w-1.5 h-1.5 rounded-full ${statusBg} animate-pulse`;
+
+        // BTC Dominance
+        updateValue('ib-btc-dom', `${data.btcDom}%`, prevData.btcDom ? `${prevData.btcDom}%` : undefined);
+        const domChange = parseFloat(data.btcDomChange);
+        els.btcDomChange.innerText = `${domChange >= 0 ? '▲' : '▼'} ${Math.abs(domChange).toFixed(1)}%`;
+        els.btcDomChange.className = `text-[9px] font-bold ${domChange >= 0 ? 'text-green-500' : 'text-red-500'}`;
+
+        // ETH Gas
+        updateValue('ib-gas-value', `${data.ethGas} Gwei`, prevData.ethGas ? `${prevData.ethGas} Gwei` : undefined);
+        const gasColor = data.ethGas < 20 ? 'text-green-500' : (data.ethGas < 50 ? 'text-yellow-500' : 'text-red-500');
+        els.gasValue.className = `intelligence-bar-value ${gasColor}`;
+
+        // Fear & Greed
+        updateValue('ib-fng-value', data.fng.value, prevData.fng ? prevData.fng.value : undefined);
+        els.fngLabel.innerText = data.fng.label;
+        const fngColor = data.fng.value > 70 ? 'text-green-500' : (data.fng.value < 30 ? 'text-red-500' : 'text-yellow-500');
+        els.fngValue.className = `intelligence-bar-value ${fngColor}`;
+
+        // Funding Rate
+        const fundingValStr = `${data.fundingRate >= 0 ? '+' : ''}${data.fundingRate}%`;
+        updateValue('ib-funding-value', fundingValStr, prevData.fundingRate !== undefined ? `${prevData.fundingRate >= 0 ? '+' : ''}${prevData.fundingRate}%` : undefined);
+        els.fundingValue.className = `intelligence-bar-value ${data.fundingRate >= 0 ? 'text-green-500' : 'text-red-500'}`;
+
+        // Open Interest
+        updateValue('ib-oi-value', `$${data.openInterest}B`, prevData.openInterest ? `$${prevData.openInterest}B` : undefined);
+        const oiChange = parseFloat(data.oiChange);
+        els.oiChange.innerText = `${oiChange >= 0 ? '+' : ''}${oiChange}%`;
+        els.oiChange.className = `text-[8px] font-bold ${oiChange >= 0 ? 'text-green-500' : 'text-red-500'}`;
+
+        // Liquidations
+        updateValue('ib-liq-value', `$${data.liquidations}M`, prevData.liquidations ? `$${prevData.liquidations}M` : undefined);
+
+        // Stablecoin Flows
+        const stableFlows = parseInt(data.stableFlows);
+        const stableStr = `${stableFlows >= 0 ? '+' : ''}$${Math.abs(stableFlows)}M`;
+        updateValue('ib-stable-value', stableStr, prevData.stableFlows !== undefined ? (prevData.stableFlows >= 0 ? '+' : '') + '$' + Math.abs(prevData.stableFlows) + 'M' : undefined);
+        els.stableValue.className = `intelligence-bar-value ${stableFlows >= 0 ? 'text-green-500' : 'text-red-500'}`;
+
+        // Alt Season
+        const altState = data.altSeason > 75 ? 'Altcoin Season' : (data.altSeason < 25 ? 'Bitcoin Season' : 'Neutral');
+        updateValue('ib-alt-value', `${data.altSeason}/100 ${altState}`, prevData.altSeason ? `${prevData.altSeason}/100 ${altState}` : undefined);
+        const altColor = data.altSeason > 75 ? 'text-green-500' : (data.altSeason < 25 ? 'text-orange-500' : 'text-blue-400');
+        els.altValue.className = `intelligence-bar-value ${altColor}`;
+
+        // Intelligence Score
+        const scoreBias = data.intelligenceScore > 70 ? 'Strong Bullish Bias' : (data.intelligenceScore < 30 ? 'Strong Bearish Bias' : 'Neutral Bias');
+        updateValue('ib-score-value', `${data.intelligenceScore}/100 ${scoreBias}`, prevData.intelligenceScore ? `${prevData.intelligenceScore}/100 ${scoreBias}` : undefined);
+        const scoreColor = data.intelligenceScore > 70 ? 'text-blue-500' : (data.intelligenceScore < 30 ? 'text-red-500' : 'text-blue-400');
+        els.scoreValue.className = `intelligence-bar-value ${scoreColor} glow-blue`;
+
+        // Last Updated
+        const date = new Date(data.timestamp);
+        els.updateTime.innerText = `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')} UTC`;
+    },
+
     renderMarketCards(allCoins, watchlistIds) {
         const container = document.getElementById('market-cards');
         if (!container) return;
@@ -1224,6 +1321,80 @@ export const UI = {
         }
 
         lucide.createIcons();
+    },
+
+    openLiquidationModal() {
+        const modal = document.getElementById('liq-modal');
+        const content = document.getElementById('liq-modal-content');
+        if (!modal || !content) return;
+
+        // Fetch "live" data for details
+        const longs = Math.floor(Math.random() * 80) + 40;
+        const shorts = 200 - longs;
+        const largest = (Math.random() * 5 + 1).toFixed(2);
+        const exchanges = [
+            { name: 'Binance', value: (Math.random() * 80 + 40).toFixed(1) },
+            { name: 'OKX', value: (Math.random() * 40 + 20).toFixed(1) },
+            { name: 'Bybit', value: (Math.random() * 30 + 10).toFixed(1) },
+            { name: 'Huobi', value: (Math.random() * 10 + 5).toFixed(1) }
+        ].sort((a, b) => b.value - a.value);
+
+        content.innerHTML = `
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-dark-bg/50 p-6 rounded-2xl border border-white/5 flex flex-col items-center">
+                    <div class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Long Liquidations</div>
+                    <div class="text-3xl font-black text-emerald-500">$${longs}M</div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
+                        <div class="bg-emerald-500 h-full" style="width: ${(longs/1.8).toFixed(0)}%"></div>
+                    </div>
+                </div>
+                <div class="bg-dark-bg/50 p-6 rounded-2xl border border-white/5 flex flex-col items-center">
+                    <div class="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2">Short Liquidations</div>
+                    <div class="text-3xl font-black text-red-500">$${shorts}M</div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
+                        <div class="bg-red-500 h-full" style="width: ${(shorts/1.8).toFixed(0)}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-600/5 p-6 rounded-2xl border border-blue-500/20">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Largest Single Liquidation</span>
+                    <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[8px] font-black">XBTUSD / BYBIT</span>
+                </div>
+                <div class="text-2xl font-black text-blue-500">$${largest}M</div>
+            </div>
+
+            <div class="space-y-4">
+                <h4 class="text-[10px] font-black text-dark-muted uppercase tracking-[0.3em]">Top Exchanges by Volume</h4>
+                <div class="space-y-3">
+                    ${exchanges.map(ex => `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                <span class="text-sm font-bold">${ex.name}</span>
+                            </div>
+                            <span class="text-sm font-black">$${ex.value}M</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                            <div class="bg-blue-500/50 h-full" style="width: ${(ex.value/1.2).toFixed(0)}%"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        lucide.createIcons();
+    },
+
+    closeLiquidationModal() {
+        const modal = document.getElementById('liq-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
     },
 
     showNotification(message, type = 'info') {
