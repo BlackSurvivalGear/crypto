@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlackStack Intelligence | The Crypto Intelligence Terminal</title>
-    <meta name="description" content="BlackStack is a professional cryptocurrency intelligence platform and trading terminal providing real-time market data, whale tracking, and portfolio management.">
+    <meta name="description" content="BlackStack is a professional cryptocurrency intelligence platform and trading terminal providing real-time market data, institutional tracking, and portfolio management.">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://blackstack.intelligence/">
     <meta property="og:title" content="BlackStack Intelligence | The Crypto Intelligence Terminal">
-    <meta property="og:description" content="Professional cryptocurrency intelligence platform providing real-time market data, whale tracking, and portfolio management.">
+    <meta property="og:description" content="Professional cryptocurrency intelligence platform providing real-time market data, institutional tracking, and portfolio management.">
     <meta property="og:image" content="https://blackstack.intelligence/og-image.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://blackstack.intelligence/">
     <meta property="twitter:title" content="BlackStack Intelligence | The Crypto Intelligence Terminal">
-    <meta property="twitter:description" content="Professional cryptocurrency intelligence platform providing real-time market data, whale tracking, and portfolio management.">
+    <meta property="twitter:description" content="Professional cryptocurrency intelligence platform providing real-time market data, institutional tracking, and portfolio management.">
     <meta property="twitter:image" content="https://blackstack.intelligence/og-image.png">
 
     <!-- Tailwind CSS -->
@@ -149,8 +149,8 @@
             100% { background-position: -200% 0; }
         }
 
-        /* Whale Watch specific styles */
-        .whale-feed-item {
+        /* Terminal specific styles */
+        .terminal-feed-item {
             animation: slideIn 0.3s ease-out;
         }
         @keyframes slideIn {
@@ -161,10 +161,10 @@
             transform: translateX(100%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .whale-panel-active #whale-details-panel {
+        .terminal-panel-active #terminal-details-panel {
             transform: translateX(0);
         }
-        .whale-panel-active #whale-panel-overlay {
+        .terminal-panel-active #terminal-panel-overlay {
             opacity: 1;
             pointer-events: auto;
             display: block;
@@ -175,6 +175,21 @@
         .tx-exchange-inflow { border-left: 4px solid #ef4444; }
         .tx-institutional { border-left: 4px solid #a855f7; }
         .tx-government { border-left: 4px solid #eab308; }
+
+        /* Intelligence Terminal Transitions */
+        .terminal-feed-item {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideInTerminal 0.5s ease-out;
+        }
+
+        @keyframes slideInTerminal {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-panel {
+            @apply bg-dark-card/60 backdrop-blur-2xl border border-white/5 shadow-2xl;
+        }
 
         /* Intelligence Bar specific styles */
         .intelligence-bar-item {
@@ -265,9 +280,9 @@
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Market Overview</span>
                 </button>
-                <button data-view="whale" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
-                    <i data-lucide="waves" class="w-6 h-6"></i>
-                    <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Whale Watch</span>
+                <button data-view="institutional" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
+                    <i data-lucide="terminal" class="w-6 h-6"></i>
+                    <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Institutional Terminal</span>
                 </button>
             </nav>
             <div class="mt-auto flex flex-col gap-4">
@@ -286,9 +301,9 @@
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold">Market</span>
             </button>
-            <button data-view="whale" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
-                <i data-lucide="waves" class="w-5 h-5"></i>
-                <span class="text-[10px] font-bold">Whales</span>
+            <button data-view="institutional" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="terminal" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Terminal</span>
             </button>
             <button id="mobile-manage-portfolio" class="p-3 rounded-xl flex flex-col items-center gap-1 text-slate-400">
                 <i data-lucide="briefcase" class="w-5 h-5"></i>
@@ -782,96 +797,225 @@
                 </footer>
             </div>
 
-            <!-- Whale Watch View -->
-            <div id="whale-view" class="container mx-auto px-4 py-6 hidden">
+            <!-- Institutional Intelligence Terminal View -->
+            <div id="institutional-view" class="container mx-auto px-4 py-6 hidden">
                 <!-- Header -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 py-4">
                     <div>
                         <h1 class="text-2xl font-bold flex items-center gap-3 tracking-tight">
-                            <i data-lucide="waves" class="w-8 h-8 text-blue-500"></i>
-                            WHALE <span class="text-blue-600">WATCH</span>
+                            <i data-lucide="terminal" class="w-8 h-8 text-blue-500"></i>
+                            INSTITUTIONAL <span class="text-blue-600">INTELLIGENCE TERMINAL</span>
                         </h1>
-                        <p class="text-slate-500 dark:text-dark-muted text-xs font-medium uppercase tracking-wider">Real-time institutional transaction monitoring</p>
+                        <p class="text-slate-500 dark:text-dark-muted text-xs font-medium uppercase tracking-wider">Real-Time Institutional Capital Flow & On-Chain Market Intelligence</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div id="whale-live-status" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-bold border border-emerald-500/20">
+                        <div id="terminal-live-status" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-bold border border-emerald-500/20">
                             <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                             LIVE FEED ACTIVE
                         </div>
-                        <button id="theme-toggle-whale" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <button id="theme-toggle-terminal" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                             <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
                             <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Summary Cards -->
-                <div id="whale-summary-cards" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
-                    <!-- Injected via whale-ui.js -->
-                </div>
+                <!-- Three-Column Institutional Terminal Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-                <!-- Filters & Controls -->
-                <div class="sticky top-[60px] z-40 bg-slate-50/80 dark:bg-dark-bg/80 backdrop-blur-md py-4 mb-8 border-y border-slate-200 dark:border-dark-border">
-                    <div class="flex flex-wrap items-center gap-4">
-                        <div class="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl">
-                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-min="500000">> $500K</button>
-                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-dark-bg shadow-sm" data-min="1000000">> $1M</button>
-                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-min="5000000">> $5M</button>
-                            <button class="whale-threshold-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-min="10000000">> $10M</button>
-                        </div>
-
-                        <select id="whale-chain-filter" class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-xl px-4 py-2 text-xs font-bold focus:outline-none">
-                            <option value="all">All Networks</option>
-                            <option value="bitcoin">Bitcoin</option>
-                            <option value="ethereum">Ethereum</option>
-                            <option value="solana">Solana</option>
-                            <option value="bnb">BNB Chain</option>
-                            <option value="ripple">XRP</option>
-                            <option value="tron">Tron</option>
-                        </select>
-
-                        <div class="relative flex-1 min-w-[200px]">
-                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="text" id="whale-search" placeholder="Search hash, wallet or exchange..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Live Feed -->
-                    <div class="lg:col-span-2 space-y-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-sm font-black uppercase tracking-widest text-blue-500">Real-Time Intelligence Feed</h3>
-                            <span id="whale-feed-count" class="text-[10px] font-bold text-slate-400">Showing last 100 transactions</span>
-                        </div>
-                        <div id="whale-feed" class="space-y-3 max-h-[1200px] overflow-y-auto no-scrollbar pr-2">
-                            <!-- Transactions injected here -->
-                        </div>
-                    </div>
-
-                    <!-- Side Analytics -->
-                    <div class="space-y-8">
-                        <!-- AI Intelligence Summary -->
-                        <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6">
-                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-4">Market Intelligence (AI)</h3>
-                            <div id="whale-ai-summary" class="space-y-4">
-                                <!-- AI summaries injected here -->
+                    <!-- Column 1: Live Intelligence Feed -->
+                    <div class="flex flex-col gap-6">
+                        <!-- Live Status Bar -->
+                        <div class="glass-panel rounded-xl p-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black border border-emerald-500/20">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    LIVE
+                                </div>
+                                <div class="h-4 w-px bg-white/10"></div>
+                                <div class="text-[10px] font-bold text-dark-muted flex items-center gap-2">
+                                    <span class="text-white">Connected</span>
+                                    <div class="relative">
+                                        <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-dark-muted"></i>
+                                        <input type="text" id="terminal-search" placeholder="Search wallets, hashes..." class="bg-dark-bg border border-white/5 rounded-lg pl-7 pr-3 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500 w-32 md:w-48 transition-all">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 text-[10px] font-bold text-dark-muted">
+                                <div><span class="text-blue-500">12</span> Chains</div>
+                                <div><span class="text-blue-500" id="live-tx-rate">426</span> tx/min</div>
+                                <div>Lat <span class="text-emerald-500">0.8s</span></div>
+                                <div class="hidden md:block">Last Update: <span id="terminal-last-update" class="text-white">--:--:-- UTC</span></div>
                             </div>
                         </div>
 
-                        <!-- Chain Activity Chart -->
-                        <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6">
-                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Chain Distribution</h3>
-                            <div class="h-64">
-                                <canvas id="whale-chain-chart"></canvas>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between px-2">
+                                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Live Intelligence Feed</h3>
+                                <div class="flex items-center gap-2">
+                                    <div class="relative group">
+                                        <button id="feed-filter-btn" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1">
+                                            <i data-lucide="filter" class="w-3.5 h-3.5 text-dark-muted"></i>
+                                            <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest hidden md:block">Filter</span>
+                                        </button>
+                                        <div id="feed-filter-dropdown" class="absolute top-full right-0 mt-2 w-64 bg-dark-modal border border-dark-border rounded-xl shadow-2xl z-[140] hidden p-4 space-y-4">
+                                            <div>
+                                                <label class="block text-[9px] font-black text-dark-muted uppercase tracking-widest mb-2">Blockchain</label>
+                                                <select id="filter-chain" class="w-full bg-dark-bg border border-dark-border rounded-lg px-2 py-1.5 text-xs font-bold text-white focus:outline-none">
+                                                    <option value="all">All Networks</option>
+                                                    <option value="bitcoin">Bitcoin</option>
+                                                    <option value="ethereum">Ethereum</option>
+                                                    <option value="solana">Solana</option>
+                                                    <option value="bnb">BNB Chain</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[9px] font-black text-dark-muted uppercase tracking-widest mb-2">Institution Type</label>
+                                                <select id="filter-type" class="w-full bg-dark-bg border border-dark-border rounded-lg px-2 py-1.5 text-xs font-bold text-white focus:outline-none">
+                                                    <option value="all">All Types</option>
+                                                    <option value="exchange">Exchanges</option>
+                                                    <option value="institution">Institutions / ETFs</option>
+                                                    <option value="government">Government</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[9px] font-black text-dark-muted uppercase tracking-widest mb-2">Min Value (USD)</label>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <button class="filter-min-val px-2 py-1.5 rounded-lg bg-dark-bg border border-dark-border text-[10px] font-bold hover:border-blue-500 transition-colors" data-val="1000000">$1M</button>
+                                                    <button class="filter-min-val px-2 py-1.5 rounded-lg bg-dark-bg border border-dark-border text-[10px] font-bold hover:border-blue-500 transition-colors border-blue-500 text-blue-500" data-val="10000000">$10M</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="relative group">
+                                        <button id="alerts-btn" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1">
+                                            <i data-lucide="bell" class="w-3.5 h-3.5 text-dark-muted"></i>
+                                            <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest hidden md:block">Alerts</span>
+                                        </button>
+                                        <div id="alerts-dropdown" class="absolute top-full right-0 mt-2 w-72 bg-dark-modal border border-dark-border rounded-xl shadow-2xl z-[140] hidden p-5 space-y-4">
+                                            <h4 class="text-[10px] font-black uppercase text-blue-500 tracking-widest">Active Intelligence Alerts</h4>
+                                            <div class="space-y-3">
+                                                <div class="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/5">
+                                                    <span class="text-[10px] font-bold text-white">Value > $10M</span>
+                                                    <div class="w-6 h-3 bg-blue-600 rounded-full relative"><div class="absolute right-0.5 top-0.5 w-2 h-2 bg-white rounded-full"></div></div>
+                                                </div>
+                                                <div class="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/5">
+                                                    <span class="text-[10px] font-bold text-white">Govt Wallets</span>
+                                                    <div class="w-6 h-3 bg-blue-600 rounded-full relative"><div class="absolute right-0.5 top-0.5 w-2 h-2 bg-white rounded-full"></div></div>
+                                                </div>
+                                                <div class="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/5">
+                                                    <span class="text-[10px] font-bold text-white">ETF Movements</span>
+                                                    <div class="w-6 h-3 bg-white/10 rounded-full relative"><div class="absolute left-0.5 top-0.5 w-2 h-2 bg-white/40 rounded-full"></div></div>
+                                                </div>
+                                            </div>
+                                            <button class="w-full py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-blue-700 transition-colors">+ Create New Alert</button>
+                                        </div>
+                                    </div>
+                                    <button id="feed-settings-btn" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
+                                        <i data-lucide="more-horizontal" class="w-3.5 h-3.5 text-dark-muted"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="terminal-feed" class="space-y-3 overflow-y-auto no-scrollbar max-h-[1400px] pr-2">
+                                <!-- Institutional event cards injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Institutional Dashboard -->
+                    <div class="flex flex-col gap-8">
+                        <section class="grid grid-cols-1 md:grid-cols-2 gap-4" id="institutional-stats-grid">
+                            <!-- Dashboard cards: Vol, Net Flow, Largest Tx, etc. -->
+                        </section>
+
+                        <!-- AI Market Summary -->
+                        <section class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <i data-lucide="brain-circuit" class="w-12 h-12 text-blue-500"></i>
+                            </div>
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-4 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                AI Market Intelligence Summary
+                            </h3>
+                            <div id="terminal-ai-summary" class="space-y-4 text-sm leading-relaxed text-dark-muted">
+                                <!-- AI generated summary -->
+                                <div class="skeleton h-20 w-full rounded-xl"></div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-dark-muted italic">Last updated: <span id="ai-summary-time">--:--:--</span></span>
+                                <button class="text-[10px] font-black text-blue-500 hover:underline uppercase tracking-widest">Refresh Analysis</button>
+                            </div>
+                        </section>
+
+                        <!-- ETF Flows Table/List -->
+                        <section class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Institutional ETF Net Flows</h3>
+                            <div id="etf-flows-container" class="space-y-4">
+                                <!-- ETF flows injected here -->
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Column 3: Visual Analytics -->
+                    <div class="flex flex-col gap-8">
+                        <!-- Chain Distribution Pie -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-black uppercase tracking-widest text-blue-500">Chain Distribution</h3>
+                                <i data-lucide="pie-chart" class="w-4 h-4 text-dark-muted"></i>
+                            </div>
+                            <div class="h-64 relative">
+                                <canvas id="terminal-chain-chart"></canvas>
                             </div>
                         </div>
 
-                        <!-- Exchange Flows Chart -->
-                        <div class="bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border p-6">
-                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Exchange Flows</h3>
+                        <!-- Exchange Flows Trend -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-black uppercase tracking-widest text-blue-500">Exchange Net Flow</h3>
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-dark-muted"></i>
+                            </div>
                             <div class="h-64">
-                                <canvas id="whale-flow-chart"></canvas>
+                                <canvas id="terminal-flow-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Additional Analytics Charts -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Institutional Volume (24H)</h3>
+                            <div class="h-64">
+                                <canvas id="hourly-volume-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Activity Heat Timeline Placeholder -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6">Institutional Activity Heatmap</h3>
+                            <div class="h-32 flex items-end gap-1" id="terminal-heatmap">
+                                <!-- Heatmap bars injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Exchange Reserve Trend -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-black uppercase tracking-widest text-blue-500">Exchange Reserve Trend</h3>
+                                <i data-lucide="line-chart" class="w-4 h-4 text-dark-muted"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="reserve-trend-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Stablecoin Supply Growth -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-black uppercase tracking-widest text-blue-500">Stablecoin Supply Growth</h3>
+                                <i data-lucide="trending-up" class="w-4 h-4 text-dark-muted"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="stable-supply-chart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -902,22 +1046,25 @@
             </div>
         </div>
 
-        <!-- Whale Watch Details Slide-out Panel -->
-        <div id="whale-panel-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] opacity-0 pointer-events-none transition-opacity duration-300 hidden" style="display: none;"></div>
-        <aside id="whale-details-panel" class="fixed top-0 right-0 h-screen w-full max-w-lg bg-white dark:bg-dark-modal border-l border-slate-200 dark:border-dark-border z-[120] flex flex-col shadow-2xl">
+        <!-- Wallet Profile & Transaction Details Slide-out Panel -->
+        <div id="terminal-panel-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] opacity-0 pointer-events-none transition-opacity duration-300 hidden" style="display: none;"></div>
+        <aside id="terminal-details-panel" class="fixed top-0 right-0 h-screen w-full max-w-lg bg-white dark:bg-dark-modal border-l border-slate-200 dark:border-dark-border z-[120] flex flex-col shadow-2xl">
             <!-- Header -->
-            <div class="p-6 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+            <div class="p-6 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-dark-card/30 backdrop-blur-md">
                 <div>
-                    <h2 class="text-xl font-bold">Transaction Intelligence</h2>
-                    <p class="text-xs text-slate-500 dark:text-dark-muted font-medium" id="whale-panel-tx-id">0x000...000</p>
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-blue-500"></i>
+                        Institutional Intelligence
+                    </h2>
+                    <p class="text-[10px] text-dark-muted font-black uppercase tracking-widest mt-1" id="terminal-panel-tx-id">TX: 0x000...000</p>
                 </div>
-                <button id="close-whale-panel" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                <button id="close-terminal-panel" class="p-2 hover:bg-white/5 rounded-xl transition-all">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
 
             <!-- Content -->
-            <div id="whale-panel-content" class="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+            <div id="terminal-panel-content" class="flex-1 overflow-y-auto p-8 space-y-10 no-scrollbar">
                 <!-- Content injected here -->
             </div>
         </aside>
