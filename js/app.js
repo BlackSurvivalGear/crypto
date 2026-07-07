@@ -184,6 +184,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Init Whale Orchestrator
     WhaleWatchOrchestrator.init();
 
+    // Start Intelligence Bar Lifecycle
+    initIntelligenceBar();
+
+    // Intelligence Bar Interactions
+    const liqItem = document.getElementById('ib-liq-value')?.closest('.intelligence-bar-item');
+    if (liqItem) {
+        liqItem.addEventListener('click', () => UI.openLiquidationModal());
+    }
+
+    const closeLiqBtn = document.getElementById('close-liq-modal');
+    if (closeLiqBtn) {
+        closeLiqBtn.addEventListener('click', () => UI.closeLiquidationModal());
+    }
+
+    const liqModal = document.getElementById('liq-modal');
+    if (liqModal) {
+        liqModal.addEventListener('click', (e) => {
+            if (e.target === liqModal) UI.closeLiquidationModal();
+        });
+    }
+
     // Initial View from Hash
     const initialView = window.location.hash.substring(1) || 'market';
     UI.switchView(initialView, false);
@@ -207,11 +228,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load live data
     await loadDashboardData();
 
-    // Set up refresh intervals
+    // Set up main dashboard refresh interval (60s)
     setInterval(async () => {
         await loadDashboardData();
-    }, 60 * 1000); // 60 seconds
+    }, 60 * 1000);
 });
+
+/**
+ * Intelligence Bar Lifecycle Management
+ */
+function initIntelligenceBar() {
+    let countdown = 30;
+    const countdownEl = document.getElementById('ib-refresh-countdown');
+
+    const updateIntelligence = async () => {
+        try {
+            const data = await API.fetchIntelligenceData();
+            UI.renderIntelligenceBar(data);
+            countdown = 30; // Reset countdown
+        } catch (error) {
+            console.error('Failed to update intelligence bar:', error);
+        }
+    };
+
+    // Initial load
+    updateIntelligence();
+
+    // Refresh data every 30 seconds
+    setInterval(updateIntelligence, 30 * 1000);
+
+    // Live countdown timer every 1 second
+    setInterval(() => {
+        countdown--;
+        if (countdown < 0) countdown = 29;
+        if (countdownEl) {
+            countdownEl.innerText = `Refreshes in ${countdown}s`;
+        }
+    }, 1000);
+}
 
 async function updatePortfolioPerformance(portfolio, days = 30) {
     try {
@@ -299,22 +353,11 @@ async function loadDashboardData() {
             await updatePortfolioPerformance(portfolio);
         }
 
-        updateGlobalStats(allCoins);
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
     }
 }
 
-function updateGlobalStats(coins) {
-    const totalMCap = coins.reduce((sum, c) => sum + (c.cap || 0), 0);
-    const totalVol = coins.reduce((sum, c) => sum + (c.vol || 0), 0);
-
-    const mcapEl = document.querySelector('#global-stats .flex:nth-child(3) span:nth-child(2)');
-    if (mcapEl) mcapEl.innerText = `$${UI.formatNumber(totalMCap)}`;
-
-    const volEl = document.querySelector('#global-stats .flex:nth-child(4) span:nth-child(2)');
-    if (volEl) volEl.innerText = `$${UI.formatNumber(totalVol)}`;
-}
 
 // Theme Toggle
 const themeToggle = document.getElementById('theme-toggle');
