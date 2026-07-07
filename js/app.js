@@ -2,8 +2,8 @@
 import { API } from './api.js';
 import { Store } from './store.js';
 import { UI } from './ui.js';
-import { WhaleAPI } from './whale-api.js';
-import { WhaleUI } from './whale-ui.js';
+import { InstitutionalAPI } from './institutional-api.js';
+import { InstitutionalUI } from './institutional-ui.js';
 
 const COINS = [
     { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 64125.40, change: 2.45, cap: '1.26T', vol: '32.1B', icon: 'bitcoin', color: 'text-orange-500' },
@@ -24,11 +24,12 @@ let allCoins = [];
 window.allCoins = allCoins;
 
 /**
- * Whale Watch Orchestrator
+ * Institutional Terminal Orchestrator
  */
-const WhaleWatchOrchestrator = {
+const InstitutionalTerminalOrchestrator = {
     currentMinThreshold: 1000000,
     currentChain: 'all',
+    currentType: 'all',
     searchQuery: '',
     refreshInterval: null,
 
@@ -52,30 +53,32 @@ const WhaleWatchOrchestrator = {
 
     async refreshData(showLoading = false) {
         try {
-            if (showLoading) WhaleUI.showLoadingState();
-            const data = await WhaleAPI.getWhaleTransactions();
+            if (showLoading) InstitutionalUI.showLoadingState();
+            const data = await InstitutionalAPI.getInstitutionalTransactions();
 
             // Classification and stats calculation
-            const stats = WhaleAPI.calculateStats(data.transactions);
+            const stats = InstitutionalAPI.calculateStats(data.transactions);
 
             // Filter data based on UI state
             const filtered = data.transactions.filter(tx => {
                 const matchesThreshold = tx.amount_usd >= this.currentMinThreshold;
                 const matchesChain = this.currentChain === 'all' || tx.blockchain.toLowerCase() === this.currentChain.toLowerCase();
+                const matchesType = this.currentType === 'all' ||
+                                   (tx.from.owner_type === this.currentType || tx.to.owner_type === this.currentType);
                 const matchesSearch = !this.searchQuery ||
                     tx.hash.toLowerCase().includes(this.searchQuery) ||
-                    (tx.from_wallet && tx.from_wallet.name && tx.from_wallet.name.toLowerCase().includes(this.searchQuery)) ||
-                    (tx.to_wallet && tx.to_wallet.name && tx.to_wallet.name.toLowerCase().includes(this.searchQuery));
+                    tx.from.owner.toLowerCase().includes(this.searchQuery) ||
+                    tx.to.owner.toLowerCase().includes(this.searchQuery);
 
-                return matchesThreshold && matchesChain && matchesSearch;
+                return matchesThreshold && matchesChain && matchesType && matchesSearch;
             });
 
             // Update UI
-            WhaleUI.updateStatusBadge(WhaleAPI.status);
-            WhaleUI.renderSummaryCards(stats);
-            WhaleUI.renderLiveFeed(filtered);
-            WhaleUI.renderCharts(data.transactions); // Use all transactions for distribution charts
-            WhaleUI.renderAISummary(data.transactions);
+            InstitutionalUI.updateStatusBadge(InstitutionalAPI.status);
+            InstitutionalUI.renderInstitutionalStats(stats);
+            InstitutionalUI.renderLiveFeed(filtered);
+            InstitutionalUI.renderCharts(data.transactions); // Use all transactions for distribution charts
+            InstitutionalUI.renderAISummary(data.transactions, stats);
 
             // Trigger alerts for high value txs (> $10M) if new
             const highValueTxs = filtered.filter(tx => tx.amount_usd >= 10000000);
@@ -99,11 +102,78 @@ const WhaleWatchOrchestrator = {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
                 UI.switchView(view);
-                if (view === 'whale') {
+                if (view === 'institutional') {
                     this.startRefreshing();
                 } else {
                     this.stopRefreshing();
                 }
+            });
+        });
+
+        // Terminal Search
+        const terminalSearch = document.getElementById('terminal-search');
+        if (terminalSearch) {
+            terminalSearch.addEventListener('input', (e) => {
+                this.searchQuery = e.target.value.toLowerCase();
+                this.refreshData();
+            });
+        }
+
+        // Institution Type Filter
+        const typeFilter = document.getElementById('filter-type');
+        if (typeFilter) {
+            typeFilter.addEventListener('change', (e) => {
+                this.currentType = e.target.value;
+                this.refreshData();
+            });
+        }
+
+        // Alerts Dropdown Toggle
+        const alertsBtn = document.getElementById('alerts-btn');
+        const alertsDropdown = document.getElementById('alerts-dropdown');
+        if (alertsBtn && alertsDropdown) {
+            alertsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                alertsDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!alertsDropdown.contains(e.target) && !alertsBtn.contains(e.target)) {
+                    alertsDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // Filter Dropdown Toggle
+        const filterBtn = document.getElementById('feed-filter-btn');
+        const filterDropdown = document.getElementById('feed-filter-dropdown');
+        if (filterBtn && filterDropdown) {
+            filterBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                filterDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!filterDropdown.contains(e.target) && !filterBtn.contains(e.target)) {
+                    filterDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // Chain Filter
+        const chainFilter = document.getElementById('filter-chain');
+        if (chainFilter) {
+            chainFilter.addEventListener('change', (e) => {
+                this.currentChain = e.target.value;
+                this.refreshData();
+            });
+        }
+
+        // Min Value Filter
+        document.querySelectorAll('.filter-min-val').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-min-val').forEach(b => b.classList.remove('border-blue-500', 'text-blue-500'));
+                btn.classList.add('border-blue-500', 'text-blue-500');
+                this.currentMinThreshold = parseInt(btn.dataset.val);
+                this.refreshData();
             });
         });
 
@@ -121,47 +191,29 @@ const WhaleWatchOrchestrator = {
             });
         }
 
-        // Threshold buttons
-        document.querySelectorAll('.whale-threshold-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.whale-threshold-btn').forEach(b => b.classList.remove('bg-white', 'dark:bg-dark-bg', 'shadow-sm'));
-                btn.classList.add('bg-white', 'dark:bg-dark-bg', 'shadow-sm');
-                this.currentMinThreshold = parseInt(btn.dataset.min);
-                this.refreshData();
-            });
-        });
-
-        // Chain filter
-        const chainFilter = document.getElementById('whale-chain-filter');
-        if (chainFilter) {
-            chainFilter.addEventListener('change', (e) => {
-                this.currentChain = e.target.value;
-                this.refreshData();
-            });
-        }
-
-        // Search
-        const searchInput = document.getElementById('whale-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.searchQuery = e.target.value.toLowerCase();
-                this.refreshData();
-            });
-        }
 
         // Feed item click (Detail Panel)
-        document.getElementById('whale-feed').addEventListener('click', (e) => {
-            const item = e.target.closest('.whale-feed-item');
-            if (item) {
-                const hash = item.dataset.hash;
-                const tx = WhaleAPI.transactions.find(t => t.hash === hash);
-                if (tx) WhaleUI.openDetailPanel(tx);
-            }
-        });
+        const terminalFeed = document.getElementById('terminal-feed');
+        if (terminalFeed) {
+            terminalFeed.addEventListener('click', (e) => {
+                const item = e.target.closest('.terminal-feed-item');
+                if (item) {
+                    const hash = item.dataset.hash;
+                    const tx = InstitutionalAPI.transactions.find(t => t.hash === hash);
+                    if (tx) InstitutionalUI.openDetailPanel(tx);
+                }
+            });
+        }
 
         // Close panels
-        document.getElementById('close-whale-panel').addEventListener('click', () => WhaleUI.closeDetailPanel());
-        document.getElementById('whale-panel-overlay').addEventListener('click', () => WhaleUI.closeDetailPanel());
+        const closePanelBtn = document.getElementById('close-terminal-panel');
+        if (closePanelBtn) {
+            closePanelBtn.addEventListener('click', () => InstitutionalUI.closeDetailPanel());
+        }
+        const panelOverlay = document.getElementById('terminal-panel-overlay');
+        if (panelOverlay) {
+            panelOverlay.addEventListener('click', () => InstitutionalUI.closeDetailPanel());
+        }
     }
 };
 
@@ -181,8 +233,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupInteractivity();
 
-    // Init Whale Orchestrator
-    WhaleWatchOrchestrator.init();
+    // Init Institutional Terminal Orchestrator
+    InstitutionalTerminalOrchestrator.init();
 
     // Start Intelligence Bar Lifecycle
     initIntelligenceBar();
@@ -208,20 +260,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial View from Hash
     const initialView = window.location.hash.substring(1) || 'market';
     UI.switchView(initialView, false);
-    if (initialView === 'whale') {
-        WhaleWatchOrchestrator.startRefreshing();
+    if (initialView === 'institutional') {
+        InstitutionalTerminalOrchestrator.startRefreshing();
     } else {
-        WhaleWatchOrchestrator.stopRefreshing();
+        InstitutionalTerminalOrchestrator.stopRefreshing();
     }
 
     // Handle back/forward navigation
     window.addEventListener('hashchange', () => {
         const view = window.location.hash.substring(1) || 'market';
         UI.switchView(view, false);
-        if (view === 'whale') {
-            WhaleWatchOrchestrator.startRefreshing();
+        if (view === 'institutional') {
+            InstitutionalTerminalOrchestrator.startRefreshing();
         } else {
-            WhaleWatchOrchestrator.stopRefreshing();
+            InstitutionalTerminalOrchestrator.stopRefreshing();
         }
     });
 
@@ -361,7 +413,7 @@ async function loadDashboardData() {
 
 // Theme Toggle
 const themeToggle = document.getElementById('theme-toggle');
-const themeToggleWhale = document.getElementById('theme-toggle-whale');
+const themeToggleTerminal = document.getElementById('theme-toggle-terminal');
 
 const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle('dark');
@@ -371,11 +423,11 @@ const toggleTheme = () => {
     if (window.allCoins && Store.getWatchlist()) {
         UI.renderMarketCards(window.allCoins, Store.getWatchlist());
     }
-    if (WhaleUI.charts.chain) WhaleUI.renderCharts(WhaleAPI.transactions);
+    if (InstitutionalUI.charts.chain) InstitutionalUI.renderCharts(InstitutionalAPI.transactions);
 };
 
 if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
-if (themeToggleWhale) themeToggleWhale.addEventListener('click', toggleTheme);
+if (themeToggleTerminal) themeToggleTerminal.addEventListener('click', toggleTheme);
 
 function setupInteractivity() {
     // Asset Search

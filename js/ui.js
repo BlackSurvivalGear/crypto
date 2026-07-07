@@ -70,7 +70,7 @@ export const UI = {
         // Open Interest
         updateValue('ib-oi-value', `$${data.openInterest}B`, prevData.openInterest ? `$${prevData.openInterest}B` : undefined);
         const oiChange = parseFloat(data.oiChange);
-        els.oiChange.innerText = `${oiChange >= 0 ? '+' : ''}${oiChange}%`;
+        els.oiChange.innerText = `${oiChange >= 0 ? '▲' : '▼'}${Math.abs(oiChange)}%`;
         els.oiChange.className = `text-[8px] font-bold ${oiChange >= 0 ? 'text-green-500' : 'text-red-500'}`;
 
         // Liquidations
@@ -83,20 +83,18 @@ export const UI = {
         els.stableValue.className = `intelligence-bar-value ${stableFlows >= 0 ? 'text-green-500' : 'text-red-500'}`;
 
         // Alt Season
-        const altState = data.altSeason > 75 ? 'Altcoin Season' : (data.altSeason < 25 ? 'Bitcoin Season' : 'Neutral');
-        updateValue('ib-alt-value', `${data.altSeason}/100 ${altState}`, prevData.altSeason ? `${prevData.altSeason}/100 ${altState}` : undefined);
+        updateValue('ib-alt-value', `${data.altSeason}`, prevData.altSeason ? `${prevData.altSeason}` : undefined);
         const altColor = data.altSeason > 75 ? 'text-green-500' : (data.altSeason < 25 ? 'text-orange-500' : 'text-blue-400');
         els.altValue.className = `intelligence-bar-value ${altColor}`;
 
         // Intelligence Score
-        const scoreBias = data.intelligenceScore > 70 ? 'Strong Bullish Bias' : (data.intelligenceScore < 30 ? 'Strong Bearish Bias' : 'Neutral Bias');
-        updateValue('ib-score-value', `${data.intelligenceScore}/100 ${scoreBias}`, prevData.intelligenceScore ? `${prevData.intelligenceScore}/100 ${scoreBias}` : undefined);
+        updateValue('ib-score-value', `${data.intelligenceScore}/100`, prevData.intelligenceScore ? `${prevData.intelligenceScore}/100` : undefined);
         const scoreColor = data.intelligenceScore > 70 ? 'text-blue-500' : (data.intelligenceScore < 30 ? 'text-red-500' : 'text-blue-400');
         els.scoreValue.className = `intelligence-bar-value ${scoreColor} glow-blue`;
 
         // Last Updated
         const date = new Date(data.timestamp);
-        els.updateTime.innerText = `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')} UTC`;
+        els.updateTime.innerText = `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')} UTC`;
     },
 
     renderMarketCards(allCoins, watchlistIds) {
@@ -1218,16 +1216,16 @@ export const UI = {
 
     switchView(view, updateHash = true) {
         const marketView = document.getElementById('market-view');
-        const whaleView = document.getElementById('whale-view');
+        const institutionalView = document.getElementById('institutional-view');
         const navItems = document.querySelectorAll('.nav-item');
 
-        if (view === 'whale') {
+        if (view === 'institutional') {
             marketView.classList.add('hidden');
-            whaleView.classList.remove('hidden');
-            if (updateHash) window.location.hash = 'whale';
+            institutionalView.classList.remove('hidden');
+            if (updateHash) window.location.hash = 'institutional';
         } else {
             marketView.classList.remove('hidden');
-            whaleView.classList.add('hidden');
+            if (institutionalView) institutionalView.classList.add('hidden');
             if (updateHash) window.location.hash = 'market';
         }
 
