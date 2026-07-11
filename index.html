@@ -157,7 +157,7 @@
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        #whale-details-panel {
+        #terminal-details-panel {
             transform: translateX(100%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -205,6 +205,23 @@
         .glow-green { text-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
         .glow-red { text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
         .glow-yellow { text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
+
+        /* Mobile Bottom Sheet & FAB Styles */
+        @keyframes fab-glow {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.4), 0 0 5px rgba(245, 158, 11, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(59, 130, 246, 0.7), 0 0 15px rgba(245, 158, 11, 0.4);
+            }
+        }
+        .animate-glow-pulse {
+            animation: fab-glow 2s infinite ease-in-out;
+        }
+        #intel-bottom-sheet {
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
         #intelligence-bar {
             @apply flex flex-nowrap items-stretch justify-between min-h-[50px] w-full;
@@ -390,7 +407,17 @@
                         <h2 class="text-xl md:text-2xl font-black tracking-tight">Portfolio Manager</h2>
                         <p class="text-xs md:text-sm text-slate-500 dark:text-dark-muted font-medium">Premium Analytics & Performance Tracking</p>
                     </div>
-                    <div class="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
+                    <div class="flex flex-wrap items-center gap-3 md:gap-4 w-full sm:w-auto">
+                        <button id="export-portfolio-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-750 text-white px-3 md:px-4 py-2.5 md:py-3 rounded-xl font-bold text-xs md:text-sm transition-all hover:scale-105 active:scale-95 shadow-xl shadow-emerald-600/20" title="Export Portfolio to JSON">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Export</span>
+                        </button>
+                        <button id="import-portfolio-btn-trigger" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-750 text-white px-3 md:px-4 py-2.5 md:py-3 rounded-xl font-bold text-xs md:text-sm transition-all hover:scale-105 active:scale-95 shadow-xl shadow-amber-600/20" title="Import Portfolio from JSON">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Import</span>
+                        </button>
+                        <input type="file" id="import-portfolio-file" class="hidden" accept=".json">
+
                         <button id="add-asset-panel-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold text-xs md:text-sm transition-all hover:scale-105 active:scale-95 shadow-xl shadow-blue-600/20">
                             <i data-lucide="plus" class="w-4 h-4"></i>
                             <span>Add Asset</span>
@@ -821,10 +848,10 @@
                 </div>
 
                 <!-- Three-Column Institutional Terminal Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div id="institutional-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
                     <!-- Column 1: Live Intelligence Feed -->
-                    <div class="flex flex-col gap-6">
+                    <div id="institutional-feed-panel" class="hidden lg:flex flex-col gap-6">
                         <!-- Live Status Bar -->
                         <div class="glass-panel rounded-xl p-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -911,6 +938,9 @@
                                             <button class="w-full py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-lg hover:bg-blue-700 transition-colors">+ Create New Alert</button>
                                         </div>
                                     </div>
+                                    <button id="feed-pin-btn" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors group relative hidden lg:block" title="Pin Panel to Right">
+                                        <i data-lucide="pin" class="w-3.5 h-3.5 text-dark-muted hover:text-white transition-colors"></i>
+                                    </button>
                                     <button id="feed-settings-btn" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
                                         <i data-lucide="more-horizontal" class="w-3.5 h-3.5 text-dark-muted"></i>
                                     </button>
@@ -1047,8 +1077,8 @@
         </div>
 
         <!-- Wallet Profile & Transaction Details Slide-out Panel -->
-        <div id="terminal-panel-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] opacity-0 pointer-events-none transition-opacity duration-300 hidden" style="display: none;"></div>
-        <aside id="terminal-details-panel" class="fixed top-0 right-0 h-screen w-full max-w-lg bg-white dark:bg-dark-modal border-l border-slate-200 dark:border-dark-border z-[120] flex flex-col shadow-2xl">
+        <div id="terminal-panel-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[125] opacity-0 pointer-events-none transition-opacity duration-300 hidden" style="display: none;"></div>
+        <aside id="terminal-details-panel" class="fixed top-0 right-0 h-screen w-full max-w-lg bg-white dark:bg-dark-modal border-l border-slate-200 dark:border-dark-border z-[130] flex flex-col shadow-2xl">
             <!-- Header -->
             <div class="p-6 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-dark-card/30 backdrop-blur-md">
                 <div>
@@ -1068,6 +1098,36 @@
                 <!-- Content injected here -->
             </div>
         </aside>
+
+        <!-- Mobile FAB for Institutional Intelligence -->
+        <button id="intel-fab" class="lg:hidden fixed bottom-[20px] right-[20px] w-14 h-14 bg-gradient-to-r from-blue-600 to-amber-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] z-[105] hover:scale-105 active:scale-95 transition-all duration-300 animate-glow-pulse group focus:outline-none" title="Institutional Intel">
+            <i data-lucide="shield" class="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300"></i>
+            <!-- Notification Badge -->
+            <span id="intel-fab-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 hidden">0</span>
+        </button>
+
+        <!-- Bottom Sheet for Mobile Institutional Intelligence -->
+        <div id="intel-bottom-sheet-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] opacity-0 pointer-events-none transition-opacity duration-300 hidden"></div>
+        <div id="intel-bottom-sheet" class="fixed bottom-0 left-0 right-0 h-[70vh] bg-white dark:bg-dark-modal border-t border-slate-200 dark:border-dark-border z-[120] rounded-t-[20px] shadow-2xl flex flex-col transform translate-y-full transition-transform duration-300 ease-out">
+            <!-- Swipe handle bar -->
+            <div class="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing" id="intel-sheet-handle">
+                <div class="w-12 h-1.5 bg-slate-300 dark:bg-dark-border rounded-full"></div>
+            </div>
+            <!-- Header -->
+            <div class="px-6 pb-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-white dark:bg-dark-card/30 backdrop-blur-md rounded-t-[20px]">
+                <div>
+                    <h3 class="text-lg font-black uppercase tracking-wider text-blue-500">Institutional Intel</h3>
+                    <p class="text-[10px] text-dark-muted font-bold">REAL-TIME ALERTS & ON-CHAIN CAPITAL FLOWS</p>
+                </div>
+                <button id="close-intel-sheet" class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <!-- Scrollable Content -->
+            <div id="intel-sheet-content" class="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                <!-- Live Intelligence Feed Column 1 will be moved here on mobile -->
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/app.js"></script>

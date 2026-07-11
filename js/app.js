@@ -32,16 +32,86 @@ const InstitutionalTerminalOrchestrator = {
     currentType: 'all',
     searchQuery: '',
     refreshInterval: null,
+    isBottomSheetOpen: false,
+    hasOpenedOnce: false,
+    unreadCount: 0,
+    lastSeenTxHashes: null,
+    lastAlertedHash: null,
 
     async init() {
+        // Relocate layout depending on mobile vs desktop
+        this.adjustFeedLayout();
+        window.addEventListener('resize', () => {
+            this.adjustFeedLayout();
+            this.updateFABVisibility(window.location.hash.substring(1) || 'market');
+        });
+
         // Setup event listeners
         this.setupListeners();
+
+        // Apply saved desktop pin position
+        this.applySavedPinPosition();
+    },
+
+    adjustFeedLayout() {
+        const isMobile = window.innerWidth < 1024;
+        const feedPanel = document.getElementById('institutional-feed-panel');
+        const grid = document.getElementById('institutional-grid');
+        const sheetContent = document.getElementById('intel-sheet-content');
+
+        if (!feedPanel) return;
+
+        if (isMobile) {
+            if (feedPanel.parentElement !== sheetContent) {
+                sheetContent.appendChild(feedPanel);
+            }
+            feedPanel.classList.remove('hidden');
+        } else {
+            if (feedPanel.parentElement !== grid) {
+                const pinPosition = localStorage.getItem('feed-pin-position') || 'left';
+                if (pinPosition === 'right') {
+                    grid.appendChild(feedPanel);
+                } else {
+                    grid.insertBefore(feedPanel, grid.firstChild);
+                }
+            }
+            feedPanel.classList.add('hidden');
+        }
+    },
+
+    applySavedPinPosition() {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) return;
+
+        const pinPosition = localStorage.getItem('feed-pin-position') || 'left';
+        const grid = document.getElementById('institutional-grid');
+        const feedPanel = document.getElementById('institutional-feed-panel');
+        const pinBtn = document.getElementById('feed-pin-btn');
+        if (grid && feedPanel) {
+            if (pinPosition === 'right') {
+                grid.appendChild(feedPanel);
+                if (pinBtn) {
+                    const pinIcon = pinBtn.querySelector('i');
+                    if (pinIcon) pinIcon.classList.add('text-blue-500');
+                }
+            }
+        }
     },
 
     startRefreshing() {
-        if (this.refreshInterval) return;
-        this.refreshData(true); // Show loading only on first start
-        this.refreshInterval = setInterval(() => this.refreshData(false), 30000);
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            if (this.isBottomSheetOpen) {
+                if (this.refreshInterval) return;
+                this.refreshData(!this.hasOpenedOnce);
+                this.hasOpenedOnce = true;
+                this.refreshInterval = setInterval(() => this.refreshData(false), 30000);
+            }
+        } else {
+            if (this.refreshInterval) return;
+            this.refreshData(true);
+            this.refreshInterval = setInterval(() => this.refreshData(false), 30000);
+        }
     },
 
     stopRefreshing() {
@@ -51,12 +121,83 @@ const InstitutionalTerminalOrchestrator = {
         }
     },
 
+    updateFABVisibility(view) {
+        const fab = document.getElementById('intel-fab');
+        if (fab) {
+            if (view === 'institutional' && window.innerWidth < 1024) {
+                fab.classList.remove('hidden');
+                this.updateFABBadge();
+            } else {
+                fab.classList.add('hidden');
+            }
+        }
+    },
+
+    updateFABBadge() {
+        const badge = document.getElementById('intel-fab-badge');
+        if (badge) {
+            if (this.unreadCount > 0) {
+                badge.innerText = this.unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    },
+
+    openBottomSheet() {
+        const sheet = document.getElementById('intel-bottom-sheet');
+        const overlay = document.getElementById('intel-bottom-sheet-overlay');
+        if (sheet && overlay) {
+            overlay.classList.remove('hidden');
+            overlay.offsetHeight; // force reflow
+            overlay.classList.add('opacity-100');
+            overlay.classList.remove('pointer-events-none');
+
+            sheet.classList.remove('translate-y-full');
+
+            this.isBottomSheetOpen = true;
+            this.unreadCount = 0;
+            this.updateFABBadge();
+
+            // Lazy load and start refreshing
+            this.startRefreshing();
+        }
+    },
+
+    closeBottomSheet() {
+        const sheet = document.getElementById('intel-bottom-sheet');
+        const overlay = document.getElementById('intel-bottom-sheet-overlay');
+        if (sheet && overlay) {
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('pointer-events-none');
+
+            sheet.classList.add('translate-y-full');
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
+
+            this.isBottomSheetOpen = false;
+            this.stopRefreshing();
+        }
+    },
+
     async refreshData(showLoading = false) {
         try {
-            if (showLoading) InstitutionalUI.showLoadingState();
-            const data = await InstitutionalAPI.getInstitutionalTransactions();
+            const isMobile = window.innerWidth < 1024;
+            const isSheetOpen = this.isBottomSheetOpen;
 
-            // Classification and stats calculation
+            // Performance: Lazy load on mobile when sheet is closed
+            if (isMobile && !isSheetOpen && !this.hasOpenedOnce) {
+                return;
+            }
+
+            if (showLoading && (!isMobile || isSheetOpen)) {
+                InstitutionalUI.showLoadingState();
+            }
+
+            const data = await InstitutionalAPI.getInstitutionalTransactions();
             const stats = InstitutionalAPI.calculateStats(data.transactions);
 
             // Filter data based on UI state
@@ -76,14 +217,37 @@ const InstitutionalTerminalOrchestrator = {
             // Update UI
             InstitutionalUI.updateStatusBadge(InstitutionalAPI.status);
             InstitutionalUI.renderInstitutionalStats(stats);
-            InstitutionalUI.renderLiveFeed(filtered);
-            InstitutionalUI.renderCharts(data.transactions); // Use all transactions for distribution charts
+            InstitutionalUI.renderCharts(data.transactions);
             InstitutionalUI.renderAISummary(data.transactions, stats);
+
+            // Feed rendering: only when desktop or mobile sheet is open
+            if (!isMobile || isSheetOpen) {
+                InstitutionalUI.renderLiveFeed(filtered);
+            }
+
+            // Notification/Unread badge calculation for mobile
+            if (isMobile) {
+                if (!this.lastSeenTxHashes) {
+                    this.lastSeenTxHashes = new Set(filtered.map(tx => tx.hash));
+                    this.unreadCount = 0;
+                } else {
+                    let newAlertsCount = 0;
+                    filtered.forEach(tx => {
+                        if (!this.lastSeenTxHashes.has(tx.hash)) {
+                            newAlertsCount++;
+                            this.lastSeenTxHashes.add(tx.hash);
+                        }
+                    });
+                    if (newAlertsCount > 0 && !isSheetOpen) {
+                        this.unreadCount = (this.unreadCount || 0) + newAlertsCount;
+                        this.updateFABBadge();
+                    }
+                }
+            }
 
             // Trigger alerts for high value txs (> $10M) if new
             const highValueTxs = filtered.filter(tx => tx.amount_usd >= 10000000);
             if (highValueTxs.length > 0) {
-                // Check if we already alerted for the top transaction in this session
                 const topTx = highValueTxs[0];
                 if (this.lastAlertedHash !== topTx.hash) {
                     UI.showNotification(`🚨 WHALE ALERT: $${(topTx.amount_usd/1e6).toFixed(1)}M ${topTx.symbol.toUpperCase()} moved!`, 'warning');
@@ -102,6 +266,7 @@ const InstitutionalTerminalOrchestrator = {
             btn.addEventListener('click', () => {
                 const view = btn.dataset.view;
                 UI.switchView(view);
+                this.updateFABVisibility(view);
                 if (view === 'institutional') {
                     this.startRefreshing();
                 } else {
@@ -109,6 +274,96 @@ const InstitutionalTerminalOrchestrator = {
                 }
             });
         });
+
+        // Mobile FAB & Bottom Sheet Click listeners
+        const fab = document.getElementById('intel-fab');
+        if (fab) {
+            fab.addEventListener('click', () => {
+                this.openBottomSheet();
+            });
+        }
+
+        const closeSheetBtn = document.getElementById('close-intel-sheet');
+        if (closeSheetBtn) {
+            closeSheetBtn.addEventListener('click', () => {
+                this.closeBottomSheet();
+            });
+        }
+
+        const sheetOverlay = document.getElementById('intel-bottom-sheet-overlay');
+        if (sheetOverlay) {
+            sheetOverlay.addEventListener('click', () => {
+                this.closeBottomSheet();
+            });
+        }
+
+        // Swipe Gestures for bottom sheet handle
+        const handle = document.getElementById('intel-sheet-handle');
+        const sheet = document.getElementById('intel-bottom-sheet');
+        if (handle && sheet) {
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+
+            handle.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+                sheet.style.transition = 'none';
+            }, { passive: true });
+
+            handle.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY > 0) {
+                    sheet.style.transform = `translateY(${deltaY}px)`;
+                }
+            }, { passive: true });
+
+            handle.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                sheet.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+
+                const deltaY = currentY - startY;
+                if (deltaY > 150) {
+                    this.closeBottomSheet();
+                } else {
+                    sheet.style.transform = 'translateY(0)';
+                }
+            }, { passive: true });
+        }
+
+        // Desktop Pin button listener
+        const pinBtn = document.getElementById('feed-pin-btn');
+        if (pinBtn) {
+            pinBtn.addEventListener('click', () => {
+                const currentPosition = localStorage.getItem('feed-pin-position') || 'left';
+                const newPosition = currentPosition === 'left' ? 'right' : 'left';
+                localStorage.setItem('feed-pin-position', newPosition);
+
+                const grid = document.getElementById('institutional-grid');
+                const feedPanel = document.getElementById('institutional-feed-panel');
+                if (grid && feedPanel) {
+                    if (newPosition === 'right') {
+                        grid.appendChild(feedPanel);
+                        UI.showNotification('Feed pinned to right', 'info');
+                    } else {
+                        grid.insertBefore(feedPanel, grid.firstChild);
+                        UI.showNotification('Feed pinned to left', 'info');
+                    }
+                }
+
+                const pinIcon = pinBtn.querySelector('i');
+                if (pinIcon) {
+                    if (newPosition === 'right') {
+                        pinIcon.classList.add('text-blue-500');
+                    } else {
+                        pinIcon.classList.remove('text-blue-500');
+                    }
+                }
+            });
+        }
 
         // Terminal Search
         const terminalSearch = document.getElementById('terminal-search');
@@ -260,6 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial View from Hash
     const initialView = window.location.hash.substring(1) || 'market';
     UI.switchView(initialView, false);
+    InstitutionalTerminalOrchestrator.updateFABVisibility(initialView);
     if (initialView === 'institutional') {
         InstitutionalTerminalOrchestrator.startRefreshing();
     } else {
@@ -270,6 +526,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('hashchange', () => {
         const view = window.location.hash.substring(1) || 'market';
         UI.switchView(view, false);
+        InstitutionalTerminalOrchestrator.updateFABVisibility(view);
         if (view === 'institutional') {
             InstitutionalTerminalOrchestrator.startRefreshing();
         } else {
@@ -405,6 +662,12 @@ async function loadDashboardData() {
             await updatePortfolioPerformance(portfolio);
         }
 
+        // Lightweight check for new institutional alerts during dashboard refresh
+        const view = window.location.hash.substring(1) || 'market';
+        if (view === 'institutional') {
+            await InstitutionalTerminalOrchestrator.refreshData(false);
+        }
+
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
     }
@@ -430,6 +693,76 @@ if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 if (themeToggleTerminal) themeToggleTerminal.addEventListener('click', toggleTheme);
 
 function setupInteractivity() {
+    // Export Portfolio handler
+    const exportBtn = document.getElementById('export-portfolio-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const portfolio = Store.getPortfolio();
+            const jsonStr = JSON.stringify(portfolio, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `blackstack_portfolio_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            UI.showNotification('Portfolio exported successfully', 'success');
+        });
+    }
+
+    // Import Portfolio handler
+    const importTrigger = document.getElementById('import-portfolio-btn-trigger');
+    const importInput = document.getElementById('import-portfolio-file');
+    if (importTrigger && importInput) {
+        importTrigger.addEventListener('click', () => {
+            importInput.click();
+        });
+        importInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    if (!Array.isArray(importedData)) {
+                        throw new Error('Imported data must be a JSON array.');
+                    }
+
+                    // Simple validation of items
+                    const validated = importedData.map(item => {
+                        if (!item.id) throw new Error('Each asset must have an id.');
+                        return {
+                            id: item.id,
+                            amount: isNaN(parseFloat(item.amount)) ? 0 : parseFloat(item.amount),
+                            buyPrice: isNaN(parseFloat(item.buyPrice)) ? 0 : parseFloat(item.buyPrice),
+                            date: item.date || '',
+                            notes: item.notes || ''
+                        };
+                    });
+
+                    // Save to store
+                    Store.set('portfolio', validated);
+
+                    // Re-render dashboard components
+                    UI.renderPortfolio(validated, allCoins);
+                    UI.renderPortfolioPanel(validated, allCoins);
+                    updatePortfolioPerformance(validated);
+
+                    UI.showNotification('Portfolio imported successfully', 'success');
+                    importInput.value = ''; // Reset file input
+                } catch (err) {
+                    console.error('Portfolio import failed:', err);
+                    UI.showNotification(`Import failed: ${err.message}`, 'error');
+                    importInput.value = ''; // Reset file input
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+
     // Asset Search
     const searchInput = document.getElementById('asset-search');
     if (searchInput) {
