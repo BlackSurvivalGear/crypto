@@ -4,7 +4,7 @@ import { CoinIntelligence } from './coin-intelligence.js';
 
 /**
  * High-performance lightweight Crypto Bubbles Module.
- * Designed for visual market overview with fluid physics, custom shading, and interactive controls.
+ * Redesigned as a stable, premium, deterministic circle-packed market heatmap.
  */
 export const CryptoBubbles = {
     canvas: null,
@@ -20,15 +20,6 @@ export const CryptoBubbles = {
     draggedBubble: null,
     hoveredBubble: null,
     loadedImages: new Map(),
-
-    // Physics parameters for continuous fluid motion
-    physics: {
-        gravityY: -0.01,       // gentle upward buoyancy
-        damping: 0.985,         // liquid drag friction
-        bounce: -0.3,           // border bounce damping
-        collisionForce: 0.1,    // repulsion speed between bubbles
-        attractionToCenter: 0.005 // gentle pull towards center to avoid drifting apart
-    },
 
     // Sectors mapping
     sectors: {
@@ -64,8 +55,6 @@ export const CryptoBubbles = {
     resizeCanvas() {
         if (!this.canvas) return;
         const parent = this.canvas.parentElement;
-        const prevWidth = this.canvas.width;
-        const prevHeight = this.canvas.height;
 
         const targetWidth = parent.clientWidth || 1000;
         const targetHeight = parent.clientHeight || 600;
@@ -73,9 +62,9 @@ export const CryptoBubbles = {
         this.canvas.width = targetWidth;
         this.canvas.height = targetHeight;
 
-        // If bubbles were initialized in a 0x0 or fallback canvas, re-init them to distribute correctly
-        if (this.bubbles.length > 0 && (prevWidth <= 100 || prevHeight <= 100) && targetWidth > 100 && targetHeight > 100) {
-            this.initBubbles();
+        // Recompute the layout to center and fit perfectly in the new viewport dimensions
+        if (this.bubbles.length > 0) {
+            this.computePackedLayout();
         }
     },
 
@@ -98,6 +87,7 @@ export const CryptoBubbles = {
         if (sectorSelect) {
             sectorSelect.addEventListener('change', (e) => {
                 this.currentSector = e.target.value;
+                this.computePackedLayout();
             });
         }
 
@@ -106,6 +96,7 @@ export const CryptoBubbles = {
         if (highlightSelect) {
             highlightSelect.addEventListener('change', (e) => {
                 this.currentHighlight = e.target.value;
+                this.computePackedLayout();
             });
         }
 
@@ -114,6 +105,7 @@ export const CryptoBubbles = {
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.searchQuery = e.target.value.toLowerCase().trim();
+                this.computePackedLayout();
             });
         }
 
@@ -150,6 +142,7 @@ export const CryptoBubbles = {
         // Find clicked bubble
         let clicked = null;
         for (const b of this.bubbles) {
+            if (b.opacity < 0.2) continue; // Skip inactive/faded bubbles
             const dist = Math.hypot(b.x - x, b.y - y);
             if (dist < b.radius) {
                 clicked = b;
@@ -182,12 +175,11 @@ export const CryptoBubbles = {
         if (this.draggedBubble) {
             this.draggedBubble.x = x - this.draggedBubble.dragX;
             this.draggedBubble.y = y - this.draggedBubble.dragY;
-            this.draggedBubble.vx = 0;
-            this.draggedBubble.vy = 0;
         } else {
             // Check hover state
             let foundHover = null;
             for (const b of this.bubbles) {
+                if (b.opacity < 0.2) continue; // Skip inactive/faded bubbles
                 const dist = Math.hypot(b.x - x, b.y - y);
                 if (dist < b.radius) {
                     foundHover = b;
@@ -327,29 +319,32 @@ export const CryptoBubbles = {
         if (this.coinsData.length === 0) return;
 
         this.bubbles = this.coinsData.map(coin => {
-            const rad = this.calculateTargetRadius(coin);
-            // Random position inside canvas with boundary margins
-            const x = Math.random() * (this.canvas.width - rad * 2) + rad;
-            const y = Math.random() * (this.canvas.height - rad * 2) + rad;
+            const baseRad = this.calculateBaseRadius(coin);
+            const changeVal = coin[this.getTimeframeKey()] !== undefined ? coin[this.getTimeframeKey()] : coin.change;
+            const initialColor = this.getBubbleColor(changeVal);
 
             return {
                 coin: coin,
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 0.4,
-                vy: (Math.random() - 0.5) * 0.4,
-                radius: rad,
-                targetRadius: rad,
-                currentVal: coin.change,
-                targetVal: coin.change,
-                opacity: 1.0,
+                id: coin.id,
+                x: this.canvas.width / 2 + (Math.random() - 0.5) * 40,
+                y: this.canvas.height / 2 + (Math.random() - 0.5) * 40,
+                radius: 10,
+                baseRadius: baseRad,
+                targetRadius: baseRad,
+                currentVal: changeVal,
+                targetVal: changeVal,
+                color: { ...initialColor },
+                opacity: 0.0,
+                targetOpacity: 1.0,
                 isDragging: false,
                 lastClickTime: 0
             };
         });
+
+        this.computePackedLayout();
     },
 
-    calculateTargetRadius(coin) {
+    calculateBaseRadius(coin) {
         // Combined weight of Market Cap and 24h Volume on a Logarithmic scale
         const mcap = coin.cap || 1000000;
         const vol = coin.vol || 500000;
@@ -357,35 +352,211 @@ export const CryptoBubbles = {
         // Log weight metric
         const weight = Math.log10(mcap) * 0.7 + Math.log10(vol) * 0.3;
 
-        // Map linearly to radius range of 25px to 75px
-        // Average BTC cap is ~12-13 on log10, small cap is ~5-6
+        // Map linearly to base radius range of 25px to 75px
         const minWeight = 4;
         const maxWeight = 13.5;
 
         let normalized = (weight - minWeight) / (maxWeight - minWeight);
         normalized = Math.max(0, Math.min(1, normalized)); // clamp
 
-        return 25 + normalized * 50; // Radius range: 25px - 75px
+        return 25 + normalized * 50; // Base Radius range: 25px - 75px
+    },
+
+    // Retained for backward-compatibility if referenced elsewhere
+    calculateTargetRadius(coin) {
+        return this.calculateBaseRadius(coin);
+    },
+
+    computePackedLayout() {
+        // Determine which bubbles match current filters and are active
+        const activeBubbles = this.bubbles.filter(b => {
+            const coin = b.coin;
+            const isMatchSector = this.isCoinInSector(coin, this.currentSector);
+            const isSearchMatch = this.searchQuery === '' ||
+                                  coin.name.toLowerCase().includes(this.searchQuery) ||
+                                  coin.symbol.toLowerCase().includes(this.searchQuery);
+            const isHighlighted = this.isHighlighted(b);
+            return isMatchSector && isSearchMatch && isHighlighted;
+        });
+
+        if (activeBubbles.length === 0) {
+            // Fade out all bubbles if no matches found
+            this.bubbles.forEach(b => {
+                b.targetOpacity = 0.0;
+            });
+            return;
+        }
+
+        // Sort active bubbles by base radius descending (largest first)
+        activeBubbles.sort((a, b) => b.baseRadius - a.baseRadius);
+
+        // Deterministic Circle Packing around (0, 0)
+        activeBubbles[0].targetX = 0;
+        activeBubbles[0].targetY = 0;
+
+        const numAngles = 24;
+        const angles = [];
+        for (let k = 0; k < numAngles; k++) {
+            angles.push((k / numAngles) * 2 * Math.PI);
+        }
+
+        for (let i = 1; i < activeBubbles.length; i++) {
+            const b = activeBubbles[i];
+            let bestX = 0;
+            let bestY = 0;
+            let minCenterDist = Infinity;
+
+            // Generate candidates tangent to each already placed bubble
+            for (let j = 0; j < i; j++) {
+                const placed = activeBubbles[j];
+                const dist = placed.baseRadius + b.baseRadius + 2; // 2px separation gap
+
+                for (const theta of angles) {
+                    const candX = placed.targetX + dist * Math.cos(theta);
+                    const candY = placed.targetY + dist * Math.sin(theta);
+
+                    // Check for overlap with already placed bubbles
+                    let overlap = false;
+                    for (let k = 0; k < i; k++) {
+                        const other = activeBubbles[k];
+                        const actualDist = Math.hypot(candX - other.targetX, candY - other.targetY);
+                        if (actualDist < other.baseRadius + b.baseRadius + 1.5) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlap) {
+                        const centerDist = Math.hypot(candX, candY);
+                        if (centerDist < minCenterDist) {
+                            minCenterDist = centerDist;
+                            bestX = candX;
+                            bestY = candY;
+                        }
+                    }
+                }
+            }
+
+            b.targetX = bestX;
+            b.targetY = bestY;
+        }
+
+        // Find packed bounding box to center and scale perfectly to the canvas viewport
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        activeBubbles.forEach(b => {
+            minX = Math.min(minX, b.targetX - b.baseRadius);
+            maxX = Math.max(maxX, b.targetX + b.baseRadius);
+            minY = Math.min(minY, b.targetY - b.baseRadius);
+            maxY = Math.max(maxY, b.targetY + b.baseRadius);
+        });
+
+        const packedWidth = maxX - minX;
+        const packedHeight = maxY - minY;
+
+        const padding = 50;
+        const availableWidth = this.canvas.width - padding * 2;
+        const availableHeight = this.canvas.height - padding * 2;
+
+        let scale = 1;
+        if (packedWidth > 0 && packedHeight > 0) {
+            scale = Math.min(availableWidth / packedWidth, availableHeight / packedHeight);
+        }
+        // Clamp scale so bubbles don't grow too large when few coins are matched
+        scale = Math.min(scale, 1.8);
+
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const packedCenterX = (minX + maxX) / 2;
+        const packedCenterY = (minY + maxY) / 2;
+
+        // Apply scale, center, and target opacity
+        activeBubbles.forEach(b => {
+            b.targetX = centerX + (b.targetX - packedCenterX) * scale;
+            b.targetY = centerY + (b.targetY - packedCenterY) * scale;
+            b.targetRadius = b.baseRadius * scale;
+            b.targetOpacity = 1.0;
+        });
+
+        // Fade out inactive bubbles
+        this.bubbles.forEach(b => {
+            if (!activeBubbles.includes(b)) {
+                b.targetOpacity = 0.0;
+                b.targetRadius = b.baseRadius * 0.5; // Scale down slightly as they fade
+            }
+        });
     },
 
     updateBubbleVisuals(animate = false) {
         const timeframeKey = this.getTimeframeKey();
 
+        // Check if coin dataset changed (new listings, removed listings)
+        const existingIds = new Set(this.bubbles.map(b => b.id));
+        const currentIds = new Set(this.coinsData.map(c => c.id));
+
+        let mismatch = false;
+        if (existingIds.size !== currentIds.size) {
+            mismatch = true;
+        } else {
+            for (const id of currentIds) {
+                if (!existingIds.has(id)) {
+                    mismatch = true;
+                    break;
+                }
+            }
+        }
+
+        if (mismatch) {
+            // Reconcile and preserve identical bubbles to maintain position stability
+            const reorderedBubbles = [];
+            this.coinsData.forEach(coin => {
+                const existing = this.bubbles.find(b => b.id === coin.id);
+                if (existing) {
+                    existing.coin = coin;
+                    reorderedBubbles.push(existing);
+                } else {
+                    const baseRad = this.calculateBaseRadius(coin);
+                    const changeVal = coin[timeframeKey] !== undefined ? coin[timeframeKey] : coin.change;
+                    const initialColor = this.getBubbleColor(changeVal);
+                    reorderedBubbles.push({
+                        coin: coin,
+                        id: coin.id,
+                        x: this.canvas.width / 2,
+                        y: this.canvas.height / 2,
+                        radius: 10,
+                        baseRadius: baseRad,
+                        targetRadius: baseRad,
+                        currentVal: changeVal,
+                        targetVal: changeVal,
+                        color: { ...initialColor },
+                        opacity: 0.0,
+                        targetOpacity: 1.0,
+                        isDragging: false,
+                        lastClickTime: 0
+                    });
+                }
+            });
+            this.bubbles = reorderedBubbles;
+        }
+
+        // Update target details
         this.bubbles.forEach(b => {
-            const coin = this.coinsData.find(c => c.id === b.coin.id) || b.coin;
+            const coin = this.coinsData.find(c => c.id === b.id) || b.coin;
             b.coin = coin;
 
             const changeVal = coin[timeframeKey] !== undefined ? coin[timeframeKey] : coin.change;
             b.targetVal = changeVal;
 
-            const targetRad = this.calculateTargetRadius(coin);
-            b.targetRadius = targetRad;
+            const baseRad = this.calculateBaseRadius(coin);
+            b.baseRadius = baseRad;
 
             if (!animate) {
-                b.radius = targetRad;
+                b.radius = b.targetRadius;
                 b.currentVal = changeVal;
             }
         });
+
+        this.computePackedLayout();
     },
 
     isCoinInSector(coin, sector) {
@@ -409,166 +580,93 @@ export const CryptoBubbles = {
         const coin = b.coin;
         switch (this.currentHighlight) {
             case 'gainers':
-                return b.currentVal > 1.5;
+                return b.targetVal > 1.5;
             case 'losers':
-                return b.currentVal < -1.5;
+                return b.targetVal < -1.5;
             case 'volume':
-                // Upper 20% by volume
                 const avgVol = this.coinsData.reduce((s, c) => s + (c.vol || 0), 0) / this.coinsData.length;
                 return (coin.vol || 0) > avgVol * 1.5;
             case 'trending':
                 return ['SOL', 'RENDER', 'RNDR', 'PEPE', 'WIF', 'FET'].includes(coin.symbol.toUpperCase());
             case 'new':
-                return coin.rank > 80; // simulate new listings
+                return coin.rank > 80;
             case 'mcap':
-                return (coin.cap || 0) > 1e10; // > $10B MCAP
+                return (coin.cap || 0) > 1e10;
             default:
                 return true;
         }
     },
 
     updatePhysics() {
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        const centerX = width / 2;
-        const centerY = height / 2;
+        // High-end premium easing transitions (exponential decay, 250-400ms settle duration)
+        // This removes all erratic bounces, floatings, and jitterings.
+        const easeFactor = 0.15;
 
-        // Double loops to handle bubble collisions (N is small ~100, N^2 is extremely light)
-        for (let i = 0; i < this.bubbles.length; i++) {
-            const b1 = this.bubbles[i];
-            if (b1.isDragging) continue;
+        this.bubbles.forEach(b => {
+            if (b.isDragging) return;
 
-            // Buoyancy / target-directed flow: slight upward pull and attraction to center to clump together beautifully
-            const buoyancy = -0.005 * b1.radius; // larger bubbles bounce up a bit more
-            b1.vy += buoyancy;
+            // Interpolate position
+            b.x += (b.targetX - b.x) * easeFactor;
+            b.y += (b.targetY - b.y) * easeFactor;
 
-            // Pull gently back to center workspace
-            const dxCenter = centerX - b1.x;
-            const dyCenter = centerY - b1.y;
-            b1.vx += dxCenter * this.physics.attractionToCenter * 0.1;
-            b1.vy += dyCenter * this.physics.attractionToCenter * 0.1;
+            // Interpolate size
+            b.radius += (b.targetRadius - b.radius) * easeFactor;
 
-            // Apply friction/drag damping
-            b1.vx *= this.physics.damping;
-            b1.vy *= this.physics.damping;
+            // Interpolate percentage labels
+            b.currentVal += (b.targetVal - b.currentVal) * easeFactor;
 
-            // Move position
-            b1.x += b1.vx;
-            b1.y += b1.vy;
+            // Interpolate opacity
+            b.opacity += (b.targetOpacity - b.opacity) * easeFactor;
 
-            // Soft transition on visual values (size & value)
-            b1.radius += (b1.targetRadius - b1.radius) * 0.1;
-            b1.currentVal += (b1.targetVal - b1.currentVal) * 0.1;
-
-            // Boundary bounds
-            if (b1.x - b1.radius < 0) {
-                b1.x = b1.radius;
-                b1.vx *= this.physics.bounce;
-            } else if (b1.x + b1.radius > width) {
-                b1.x = width - b1.radius;
-                b1.vx *= this.physics.bounce;
-            }
-
-            if (b1.y - b1.radius < 0) {
-                b1.y = b1.radius;
-                b1.vy *= this.physics.bounce;
-            } else if (b1.y + b1.radius > height) {
-                b1.y = height - b1.radius;
-                b1.vy *= this.physics.bounce;
-            }
-
-            // Check collisions with other bubbles
-            for (let j = i + 1; j < this.bubbles.length; j++) {
-                const b2 = this.bubbles[j];
-                const dx = b2.x - b1.x;
-                const dy = b2.y - b1.y;
-                const dist = Math.hypot(dx, dy);
-                const minDist = b1.radius + b2.radius + 2; // minor safety margin
-
-                if (dist < minDist) {
-                    // Calculate penetration depth
-                    const overlap = minDist - dist;
-                    const angle = Math.atan2(dy, dx);
-
-                    // Repulsion forces
-                    const force = overlap * this.physics.collisionForce;
-                    const fx = Math.cos(angle) * force;
-                    const fy = Math.sin(angle) * force;
-
-                    // Push apart both bubbles smoothly
-                    if (!b1.isDragging) {
-                        b1.vx -= fx;
-                        b1.vy -= fy;
-                    }
-                    if (!b2.isDragging) {
-                        b2.vx += fx;
-                        b2.vy += fy;
-                    }
-
-                    // Instantly correct positions to prevent overlapping and jittering
-                    const correctX = Math.cos(angle) * overlap * 0.5;
-                    const correctY = Math.sin(angle) * overlap * 0.5;
-
-                    if (!b1.isDragging) {
-                        b1.x -= correctX;
-                        b1.y -= correctY;
-                    }
-                    if (!b2.isDragging) {
-                        b2.x += correctX;
-                        b2.y += correctY;
-                    }
-                }
-            }
-        }
+            // Fade colour transitions
+            const targetColor = this.getBubbleColor(b.currentVal);
+            b.color.r += (targetColor.r - b.color.r) * easeFactor;
+            b.color.g += (targetColor.g - b.color.g) * easeFactor;
+            b.color.b += (targetColor.b - b.color.b) * easeFactor;
+        });
     },
 
     getBubbleColor(changeVal) {
-        // Soft gradient calculation mapping changeVal to specific RGB colors
-        // Large gains: Bright Emerald Green
-        // Small gains: Dark Green
-        // Neutral: Dark Grey
-        // Losses: Dark Red
-        // Large losses: Bright Red
+        // Redesigned premium Bloomberg-style color grading system:
+        // Bright Green = Positive (>= +2.0%)
+        // Dark Green = Slight Positive (> 0.0% and < +2.0%)
+        // Grey = Neutral (between -0.1% and +0.1%)
+        // Dark Red = Slight Negative (< 0.0% and > -2.0%)
+        // Red = Negative (<= -2.0%)
 
-        let r = 21, g = 27, b = 38; // Default Dark Grey / Matte Secondary Card
-        let intensity = 1;
-
-        if (changeVal > 0) {
-            // Gain: emerald scale
-            intensity = Math.min(1, changeVal / 10); // reaches full bright emerald at +10%
-            // Mix dark green (#0f311c) to bright emerald (#10b981)
-            r = Math.round(15 + (16 - 15) * intensity);
-            g = Math.round(49 + (185 - 49) * intensity);
-            b = Math.round(28 + (129 - 28) * intensity);
-        } else if (changeVal < 0) {
-            // Loss: red scale
-            intensity = Math.min(1, Math.abs(changeVal) / 10); // reaches full bright red at -10%
-            // Mix dark red (#3a1315) to bright red (#ef4444)
-            r = Math.round(58 + (239 - 58) * intensity);
-            g = Math.round(19 + (68 - 19) * intensity);
-            b = Math.round(21 + (68 - 21) * intensity);
+        if (Math.abs(changeVal) < 0.1) {
+            // Neutral grey
+            return { r: 55, g: 65, b: 81 };
+        } else if (changeVal >= 2.0) {
+            // Bright Green
+            return { r: 16, g: 185, b: 129 };
+        } else if (changeVal > 0) {
+            // Dark Green / Slight Positive
+            return { r: 6, g: 78, b: 59 };
+        } else if (changeVal <= -2.0) {
+            // Bright Red
+            return { r: 239, g: 68, b: 68 };
+        } else {
+            // Dark Red / Slight Negative
+            return { r: 76, g: 5, b: 25 };
         }
-
-        return { r, g, b };
     },
 
     render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.bubbles.forEach(b => {
+            if (b.opacity < 0.01) return; // Completely hidden
+
             const coin = b.coin;
-            const isMatchSector = this.isCoinInSector(coin, this.currentSector);
             const isSearchMatch = this.searchQuery === '' ||
                                   coin.name.toLowerCase().includes(this.searchQuery) ||
                                   coin.symbol.toLowerCase().includes(this.searchQuery);
-            const isHighlighted = this.isHighlighted(b);
 
-            // Determine target opacity based on filters
-            const targetOpacity = (isMatchSector && isSearchMatch && isHighlighted) ? 1.0 : 0.15;
-            b.opacity += (targetOpacity - b.opacity) * 0.1; // Smooth opacity transition
-
-            // Calculate gradient colors
-            const { r, g, b: blueVal } = this.getBubbleColor(b.currentVal);
+            // Determine RGB from b.color
+            const r = Math.round(b.color.r);
+            const g = Math.round(b.color.g);
+            const blueVal = Math.round(b.color.b);
 
             this.ctx.save();
             this.ctx.globalAlpha = b.opacity;
@@ -584,7 +682,7 @@ export const CryptoBubbles = {
             );
 
             // Highlight white glare point for 3D sphere illusion
-            grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
             grad.addColorStop(0.3, `rgba(${r}, ${g}, ${blueVal}, 0.85)`);
             grad.addColorStop(1, `rgba(${Math.max(0, r - 20)}, ${Math.max(0, g - 20)}, ${Math.max(0, blueVal - 20)}, 0.95)`);
 
