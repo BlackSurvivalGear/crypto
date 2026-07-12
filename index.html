@@ -305,10 +305,10 @@
                     <i data-lucide="brain-circuit" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Coin Intelligence</span>
                 </button>
-                <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer" class="p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 flex items-center justify-center">
+                <button data-view="crypto-bubbles" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
                     <i data-lucide="layout-grid" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Crypto Bubbles</span>
-                </a>
+                </button>
             </nav>
             <div class="mt-auto flex flex-col gap-4">
                 <button class="p-4 text-slate-400 hover:text-blue-500 transition-colors">
@@ -334,13 +334,13 @@
                 <i data-lucide="brain-circuit" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold">Intel</span>
             </button>
+            <button data-view="crypto-bubbles" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Bubbles</span>
+            </button>
             <button id="mobile-manage-portfolio" class="p-3 rounded-xl flex flex-col items-center gap-1 text-slate-400">
                 <i data-lucide="briefcase" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold">Assets</span>
-            </button>
-            <button class="p-3 rounded-xl flex flex-col items-center gap-1 text-slate-400">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-                <span class="text-[10px] font-bold">Settings</span>
             </button>
         </nav>
 
@@ -1415,6 +1415,101 @@
                     </div>
                 </section>
 
+            </div>
+
+            <!-- Crypto Bubbles View -->
+            <div id="crypto-bubbles-view" class="container mx-auto px-4 py-6 hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 py-4">
+                    <div>
+                        <h1 class="text-2xl font-black flex items-center gap-3 tracking-tight text-emerald-500">
+                            <i data-lucide="layout-grid" class="w-8 h-8 text-emerald-500"></i>
+                            CRYPTO BUBBLES <span class="text-white">INTELLIGENCE</span>
+                        </h1>
+                        <p class="text-slate-500 dark:text-dark-muted text-xs font-medium uppercase tracking-wider">The Crypto Intelligence Terminal Visual Market Overview</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="theme-toggle-cb" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                            <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="glass-panel rounded-2xl p-6 mb-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
+                        <!-- Search Box -->
+                        <div class="relative">
+                            <label class="block text-[10px] font-black text-emerald-500 mb-2 uppercase tracking-widest">Search Bubble</label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-muted"></i>
+                                <input type="text" id="cb-search" placeholder="Search by name or symbol..." class="w-full bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-sm text-slate-800 dark:text-white">
+                            </div>
+                        </div>
+
+                        <!-- Timeframes -->
+                        <div>
+                            <label class="block text-[10px] font-black text-emerald-500 mb-2 uppercase tracking-widest">Timeframe</label>
+                            <div class="flex bg-slate-100 dark:bg-dark-bg p-1 rounded-xl w-full border border-slate-200 dark:border-dark-border">
+                                <button class="cb-timeframe-btn flex-1 py-2 rounded-lg text-xs font-bold transition-all" data-time="1h">1H</button>
+                                <button class="cb-timeframe-btn flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm" data-time="24h">24H</button>
+                                <button class="cb-timeframe-btn flex-1 py-2 rounded-lg text-xs font-bold transition-all" data-time="7d">7D</button>
+                                <button class="cb-timeframe-btn flex-1 py-2 rounded-lg text-xs font-bold transition-all" data-time="30d">30D</button>
+                                <button class="cb-timeframe-btn flex-1 py-2 rounded-lg text-xs font-bold transition-all" data-time="1y">1Y</button>
+                            </div>
+                        </div>
+
+                        <!-- Sector Filters -->
+                        <div>
+                            <label class="block text-[10px] font-black text-emerald-500 mb-2 uppercase tracking-widest">Sector Filter</label>
+                            <select id="cb-sector-filter" class="w-full bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="all">All Sectors</option>
+                                <option value="top100">Top 100 MCAP</option>
+                                <option value="top200">Top 200 MCAP</option>
+                                <option value="defi">DeFi</option>
+                                <option value="ai">AI</option>
+                                <option value="gaming">Gaming</option>
+                                <option value="layer1">Layer 1</option>
+                                <option value="layer2">Layer 2</option>
+                                <option value="meme">Meme</option>
+                                <option value="rwa">RWA</option>
+                                <option value="privacy">Privacy</option>
+                                <option value="infrastructure">Infrastructure</option>
+                                <option value="stablecoins">Stablecoins</option>
+                            </select>
+                        </div>
+
+                        <!-- Intelligence Highlights -->
+                        <div>
+                            <label class="block text-[10px] font-black text-emerald-500 mb-2 uppercase tracking-widest">Highlight / Sort</label>
+                            <select id="cb-highlight-filter" class="w-full bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="none">No Highlight</option>
+                                <option value="gainers">Biggest Gainers</option>
+                                <option value="losers">Biggest Losers</option>
+                                <option value="volume">Highest Volume</option>
+                                <option value="trending">Trending</option>
+                                <option value="new">New Listings</option>
+                                <option value="mcap">Highest Market Cap</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Visualization Panel -->
+                <div class="glass-panel rounded-3xl overflow-hidden relative border border-white/5 bg-dark-bg flex flex-col justify-center items-center select-none" style="min-height: 550px; height: calc(100vh - 340px);">
+                    <canvas id="cb-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+
+                    <!-- Loading skeleton/placeholder -->
+                    <div id="cb-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-dark-bg/80 backdrop-blur-sm z-10 transition-opacity duration-300">
+                        <div class="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+                        <p class="text-xs font-black uppercase tracking-widest text-emerald-500 animate-pulse">Initializing Bubble Terminal...</p>
+                    </div>
+
+                    <!-- Custom Floating Tooltip -->
+                    <div id="cb-tooltip" class="absolute hidden bg-dark-modal/95 border border-white/10 rounded-2xl p-4 shadow-2xl z-[150] pointer-events-none transition-all duration-150 max-w-xs backdrop-blur-md">
+                        <!-- content injected via js -->
+                    </div>
+                </div>
             </div>
         </main>
 

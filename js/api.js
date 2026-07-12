@@ -34,7 +34,7 @@ export const API = {
     },
 
     async fetchCoins() {
-        const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=true&price_change_percentage=24h';
+        const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=true&price_change_percentage=1h,24h,7d,30d,1y';
         return this.fetchWithCache(url);
     },
 
