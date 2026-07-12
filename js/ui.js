@@ -206,10 +206,13 @@ export const UI = {
                     $${typeof coin.vol === 'number' ? this.formatNumber(coin.vol) : coin.vol}
                 </td>
                 <td class="px-6 py-4 border-none">
-                    <div class="flex items-center justify-end gap-4">
+                    <div class="flex items-center justify-end gap-3">
                         <div class="h-10 w-24">
                             <canvas id="table-spark-${coin.id}"></canvas>
                         </div>
+                        <button class="ci-research-trigger-btn p-2 rounded-lg hover:bg-amber-500/10 text-amber-500 transition-colors" data-id="${coin.id}" title="Coin Intelligence Research">
+                            <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                        </button>
                         <button class="watchlist-toggle p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" data-id="${coin.id}">
                             <i data-lucide="star" class="w-4 h-4 ${this.isInWatchlist(coin.id) ? 'text-amber-400 fill-amber-400' : 'text-slate-400'}"></i>
                         </button>
@@ -379,6 +382,9 @@ export const UI = {
                             ${coin.change >= 0 ? '+' : ''}${typeof coin.change === 'number' ? coin.change.toFixed(2) : coin.change}%
                         </span>
                     </div>
+                    <button class="ci-research-trigger-btn p-1.5 rounded-lg text-amber-500 hover:bg-amber-500/10 transition-all" data-id="${coin.id}" title="Research">
+                        <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i>
+                    </button>
                     <button class="remove-watchlist-item p-1.5 rounded-lg lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all" data-id="${coin.id}">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
@@ -1217,15 +1223,23 @@ export const UI = {
     switchView(view, updateHash = true) {
         const marketView = document.getElementById('market-view');
         const institutionalView = document.getElementById('institutional-view');
+        const coinIntelligenceView = document.getElementById('coin-intelligence-view');
         const navItems = document.querySelectorAll('.nav-item');
 
         if (view === 'institutional') {
             marketView.classList.add('hidden');
+            if (coinIntelligenceView) coinIntelligenceView.classList.add('hidden');
             institutionalView.classList.remove('hidden');
             if (updateHash) window.location.hash = 'institutional';
+        } else if (view === 'coin-intelligence') {
+            marketView.classList.add('hidden');
+            if (institutionalView) institutionalView.classList.add('hidden');
+            if (coinIntelligenceView) coinIntelligenceView.classList.remove('hidden');
+            if (updateHash) window.location.hash = 'coin-intelligence';
         } else {
             marketView.classList.remove('hidden');
             if (institutionalView) institutionalView.classList.add('hidden');
+            if (coinIntelligenceView) coinIntelligenceView.classList.add('hidden');
             if (updateHash) window.location.hash = 'market';
         }
 

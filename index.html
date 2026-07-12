@@ -301,6 +301,10 @@
                     <i data-lucide="terminal" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Institutional Terminal</span>
                 </button>
+                <button data-view="coin-intelligence" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                    <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Coin Intelligence</span>
+                </button>
                 <a href="https://cryptobubbles.net/" target="_blank" rel="noopener noreferrer" class="p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 flex items-center justify-center">
                     <i data-lucide="layout-grid" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Crypto Bubbles</span>
@@ -325,6 +329,10 @@
             <button data-view="institutional" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
                 <i data-lucide="terminal" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold">Terminal</span>
+            </button>
+            <button data-view="coin-intelligence" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Intel</span>
             </button>
             <button id="mobile-manage-portfolio" class="p-3 rounded-xl flex flex-col items-center gap-1 text-slate-400">
                 <i data-lucide="briefcase" class="w-5 h-5"></i>
@@ -1040,6 +1048,373 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Coin Intelligence & Tokenomics Analysis View -->
+            <div id="coin-intelligence-view" class="container mx-auto px-4 py-6 hidden">
+                <!-- Top Header & Search -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 py-4">
+                    <div>
+                        <h1 class="text-2xl font-black flex items-center gap-3 tracking-tight text-amber-500">
+                            <i data-lucide="brain-circuit" class="w-8 h-8 text-amber-500"></i>
+                            COIN INTELLIGENCE & <span class="text-white">TOKENOMICS HUB</span>
+                        </h1>
+                        <p class="text-slate-500 dark:text-dark-muted text-xs font-medium uppercase tracking-wider">Professional Institutional-Grade Cryptocurrency Research & Tokenomics Intelligence</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="theme-toggle-ci" class="p-3 rounded-lg bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                            <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Large Search Bar Section -->
+                <div class="glass-panel rounded-2xl p-6 mb-8 relative">
+                    <label class="block text-[10px] font-black text-amber-500 mb-2 uppercase tracking-widest">Search Intelligence Hub</label>
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-muted"></i>
+                        <input type="text" id="ci-search-input" placeholder="Search by Coin Name, Symbol, or Contract Address (e.g., BTC, Ethereum, LINK, RNDR)..." class="w-full bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all font-bold text-sm text-slate-800 dark:text-white">
+                    </div>
+                    <div id="ci-search-results" class="absolute left-6 right-6 mt-2 bg-white dark:bg-dark-modal border border-slate-200 dark:border-dark-border rounded-xl shadow-2xl z-[160] hidden max-h-64 overflow-y-auto">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+
+                <!-- Hero Header -->
+                <div id="ci-hero-section" class="glass-panel rounded-3xl p-8 mb-8 border border-amber-500/10 bg-gradient-to-br from-dark-card to-dark-bg relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-50"></div>
+                    <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6" id="ci-hero-content">
+                        <!-- Rendered Dynamically -->
+                        <div class="skeleton h-24 w-full rounded-2xl"></div>
+                    </div>
+                </div>
+
+                <!-- Main Layout Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+                    <!-- Left and Mid Columns (Span 2) -->
+                    <div class="lg:col-span-2 space-y-8">
+
+                        <!-- Quick Intelligence Cards -->
+                        <section class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                <i data-lucide="info" class="w-4 h-4"></i> Quick Intelligence Metrics
+                            </h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="ci-quick-cards">
+                                <!-- Injected -->
+                            </div>
+                        </section>
+
+                        <!-- Tokenomics Section -->
+                        <section class="glass-panel rounded-2xl p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-white/5 pb-4 gap-4">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                    <i data-lucide="coins" class="w-4 h-4"></i> Tokenomics & Supply Analytics
+                                </h3>
+                                <div class="flex gap-2">
+                                    <span class="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold rounded-full uppercase" id="ci-token-type">ERC-20</span>
+                                    <span class="px-3 py-1 bg-white/5 text-dark-muted border border-white/5 text-[10px] font-bold rounded-full uppercase" id="ci-blockchain">Ethereum</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                <!-- Tokenomics Stats Table -->
+                                <div class="space-y-4">
+                                    <h4 class="text-[10px] font-black uppercase tracking-wider text-dark-muted mb-2">Structure & Mechanics</h4>
+                                    <div class="divide-y divide-white/5" id="ci-tokenomics-mechanics">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+
+                                <!-- Supply Metrics Table -->
+                                <div class="space-y-4">
+                                    <h4 class="text-[10px] font-black uppercase tracking-wider text-dark-muted mb-2">Supply Breakdown</h4>
+                                    <div class="divide-y divide-white/5" id="ci-tokenomics-supply">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Distribution & Vesting Chart section -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                                <div class="space-y-4">
+                                    <h4 class="text-[10px] font-black uppercase tracking-wider text-dark-muted">Token Distribution Mapping</h4>
+                                    <div class="h-64 relative">
+                                        <canvas id="ci-distribution-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="space-y-4 flex flex-col justify-between">
+                                    <div>
+                                        <h4 class="text-[10px] font-black uppercase tracking-wider text-dark-muted">Vesting & Countdown</h4>
+                                        <div class="mt-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-6 text-center relative overflow-hidden">
+                                            <div class="text-[9px] font-bold text-amber-500 uppercase tracking-widest mb-1">Next Token Unlock Event</div>
+                                            <div class="text-2xl font-black text-white" id="ci-unlock-countdown">-- Days -- Hours</div>
+                                            <p class="text-[10px] text-dark-muted mt-2" id="ci-unlock-amount">Unlock amount: --</p>
+                                        </div>
+                                    </div>
+                                    <div class="h-44">
+                                        <canvas id="ci-historical-unlock-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Supply Analytics Charts -->
+                        <section class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6">Interactive Supply Analytics</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="text-[10px] font-black uppercase tracking-wider text-dark-muted mb-4">Circulating Supply & Burn Trend</h4>
+                                    <div class="h-48">
+                                        <canvas id="ci-supply-burn-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-[10px] font-black uppercase tracking-wider text-dark-muted mb-4">Inflationary Issuance vs Lock Growth</h4>
+                                    <div class="h-48">
+                                        <canvas id="ci-inflation-issuance-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Whale Intelligence -->
+                        <section class="glass-panel rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Whale Concentration & On-chain Flow
+                                </h3>
+                                <div class="px-2.5 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-black" id="ci-whale-accumulation-score">Accumulation: --/100</div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <!-- Wallet categories -->
+                                <div class="bg-white/5 rounded-xl p-4 border border-white/5 space-y-3">
+                                    <h4 class="text-[9px] font-black uppercase tracking-widest text-dark-muted">Largest Custody Profiles</h4>
+                                    <div class="space-y-2 text-xs" id="ci-whale-categories">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+                                <!-- Concentration index -->
+                                <div class="bg-white/5 rounded-xl p-4 border border-white/5 flex flex-col items-center justify-center">
+                                    <div class="text-[9px] font-black uppercase tracking-widest text-dark-muted mb-4">Whale Confidence Index</div>
+                                    <div class="relative w-32 h-20">
+                                        <canvas id="ci-whale-gauge"></canvas>
+                                        <div class="absolute inset-0 flex items-center justify-center text-xl font-black" id="ci-whale-gauge-text">--</div>
+                                    </div>
+                                    <div class="text-[10px] font-bold text-emerald-500 uppercase mt-2" id="ci-whale-confidence-label">Extremely Bullish</div>
+                                </div>
+                                <!-- Concentration scores -->
+                                <div class="bg-white/5 rounded-xl p-4 border border-white/5 space-y-3">
+                                    <h4 class="text-[9px] font-black uppercase tracking-widest text-dark-muted">Large Holder Concentration</h4>
+                                    <div class="space-y-4" id="ci-whale-concentration">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-emerald-500/5 rounded-xl p-4 border border-emerald-500/10 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[9px] font-black text-emerald-500 uppercase">Whale Buying Activity (24H)</span>
+                                        <div class="text-xl font-black text-white mt-1" id="ci-whale-buy">+$--M</div>
+                                    </div>
+                                    <i data-lucide="trending-up" class="w-8 h-8 text-emerald-500 opacity-30"></i>
+                                </div>
+                                <div class="bg-red-500/5 rounded-xl p-4 border border-red-500/10 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[9px] font-black text-red-500 uppercase">Whale Selling Activity (24H)</span>
+                                        <div class="text-xl font-black text-white mt-1" id="ci-whale-sell">-$--M</div>
+                                    </div>
+                                    <i data-lucide="trending-down" class="w-8 h-8 text-red-500 opacity-30"></i>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Market Metrics & Holder Analysis -->
+                        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="glass-panel rounded-2xl p-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                    <i data-lucide="users" class="w-4 h-4"></i> Holder Analytics & Growth
+                                </h3>
+                                <div class="divide-y divide-white/5" id="ci-holder-analytics">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+
+                            <div class="glass-panel rounded-2xl p-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                    <i data-lucide="bar-chart" class="w-4 h-4"></i> Sophisticated Market Metrics
+                                </h3>
+                                <div class="divide-y divide-white/5" id="ci-market-metrics">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- AI Intelligence Report & News Intelligence -->
+                        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- AI Report -->
+                            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden bg-gradient-to-b from-dark-card to-dark-bg border-amber-500/10">
+                                <div class="absolute top-0 right-0 p-4 opacity-5">
+                                    <i data-lucide="brain" class="w-16 h-16 text-amber-500"></i>
+                                </div>
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                        <i data-lucide="sparkles" class="w-4 h-4"></i> AI Research Report
+                                    </h3>
+                                    <span class="px-2.5 py-1 bg-amber-500/15 text-amber-500 border border-amber-500/20 rounded text-[10px] font-black uppercase" id="ci-ai-rating">STRONG BUY</span>
+                                </div>
+                                <div class="space-y-4 text-xs" id="ci-ai-report">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+
+                            <!-- News intelligence -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                    <i data-lucide="newspaper" class="w-4 h-4"></i> News Sentiment Feed
+                                </h3>
+                                <div class="space-y-4 max-h-[360px] overflow-y-auto no-scrollbar pr-1" id="ci-news-intelligence">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+
+                    <!-- Right Column (Span 1) -->
+                    <div class="space-y-8">
+
+                        <!-- Technical Indicators Gauge & Signals -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6">Technical Indicators Panel</h3>
+                            <div class="flex flex-col items-center mb-6">
+                                <div class="relative w-36 h-20">
+                                    <canvas id="ci-tech-gauge"></canvas>
+                                    <div class="absolute inset-0 flex items-center justify-center text-xl font-black mt-2" id="ci-tech-score">--%</div>
+                                </div>
+                                <span class="text-xs font-black uppercase text-amber-500 tracking-wider mt-2" id="ci-tech-bias">BULLISH MOMENTUM</span>
+                            </div>
+                            <div class="divide-y divide-white/5 text-xs space-y-2.5" id="ci-technical-indicators">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                        <!-- Fundamental Analysis Section -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                <i data-lucide="activity" class="w-4 h-4"></i> Fundamental Profile
+                            </h3>
+                            <div class="space-y-4" id="ci-fundamental-analysis">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                        <!-- Risk Assessment Report -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Risk Assessment Audit
+                                </h3>
+                                <span class="text-xs font-black text-emerald-500 uppercase" id="ci-overall-risk-score">Overall Score: Low</span>
+                            </div>
+                            <div class="space-y-3.5 text-xs" id="ci-risk-assessment">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                        <!-- Social Analytics aggregating channels -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                <i data-lucide="message-square" class="w-4 h-4"></i> Social Intelligence Radar
+                            </h3>
+                            <div class="divide-y divide-white/5" id="ci-social-intelligence">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                        <!-- Price Prediction Scenarios -->
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                                <i data-lucide="trending-up" class="w-4 h-4"></i> AI Price Forecast Scenarios
+                            </h3>
+                            <div class="space-y-4" id="ci-price-prediction">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div> <!-- End Main Grid -->
+
+                <!-- Historical Timeline section (Full-Width) -->
+                <section class="glass-panel rounded-2xl p-6 mt-8">
+                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4"></i> Historical Update Timeline
+                    </h3>
+                    <div class="relative pl-6 border-l border-white/10 space-y-6" id="ci-historical-timeline">
+                        <!-- Injected -->
+                    </div>
+                </section>
+
+                <!-- Investment Scorecard section (Full-Width) -->
+                <section class="glass-panel rounded-2xl p-6 mt-8">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
+                        <div>
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                <i data-lucide="award" class="w-4 h-4"></i> Weighted Institutional Scorecard
+                            </h3>
+                            <p class="text-xs text-dark-muted font-bold uppercase tracking-wider mt-1">Multi-factor score index for long-term potential</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-black text-amber-500" id="ci-scorecard-total">-- / 100</div>
+                            <div class="text-[9px] font-bold text-dark-muted uppercase tracking-widest mt-0.5">Weighted Score Rating</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="ci-scorecard-factors">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center bg-white/5 rounded-2xl p-6 border border-white/5">
+                            <div class="h-64 w-full relative">
+                                <canvas id="ci-scorecard-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Similar Projects Comparison (Full-Width) -->
+                <section class="glass-panel rounded-2xl p-6 mt-8 overflow-hidden">
+                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-6 flex items-center gap-2">
+                        <i data-lucide="git-compare" class="w-4 h-4"></i> Competitor Analysis & Peer Group Comparison
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-500 dark:text-dark-muted divide-y divide-white/5" id="ci-compare-table">
+                            <!-- Table injected dynamically -->
+                        </table>
+                    </div>
+                </section>
+
+                <!-- AI Insights Terminal Summary Report (Bottom) -->
+                <section class="glass-panel rounded-2xl p-8 mt-8 border border-amber-500/20 bg-gradient-to-tr from-dark-card to-dark-bg relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-50"></div>
+                    <div class="relative z-10 space-y-6">
+                        <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Executive Intelligence Summary & Research Report
+                            </h3>
+                            <span class="px-3 py-1 bg-amber-500/10 text-amber-500 rounded text-[10px] font-black uppercase" id="ci-summary-rating">INSTITUTIONAL GRADE</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs leading-relaxed" id="ci-summary-report">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </main>
 

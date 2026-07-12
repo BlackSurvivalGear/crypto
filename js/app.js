@@ -4,6 +4,7 @@ import { Store } from './store.js';
 import { UI } from './ui.js';
 import { InstitutionalAPI } from './institutional-api.js';
 import { InstitutionalUI } from './institutional-ui.js';
+import { CoinIntelligence } from './coin-intelligence.js';
 
 const COINS = [
     { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 64125.40, change: 2.45, cap: '1.26T', vol: '32.1B', icon: 'bitcoin', color: 'text-orange-500' },
@@ -512,6 +513,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Init Coin Intelligence
+    CoinIntelligence.init();
+
     // Initial View from Hash
     const initialView = window.location.hash.substring(1) || 'market';
     UI.switchView(initialView, false);
@@ -520,6 +524,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         InstitutionalTerminalOrchestrator.startRefreshing();
     } else {
         InstitutionalTerminalOrchestrator.stopRefreshing();
+    }
+    if (initialView === 'coin-intelligence') {
+        CoinIntelligence.loadCoin(CoinIntelligence.currentCoin ? CoinIntelligence.currentCoin.id : 'bitcoin');
     }
 
     // Handle back/forward navigation
@@ -531,6 +538,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             InstitutionalTerminalOrchestrator.startRefreshing();
         } else {
             InstitutionalTerminalOrchestrator.stopRefreshing();
+        }
+        if (view === 'coin-intelligence') {
+            CoinIntelligence.loadCoin(CoinIntelligence.currentCoin ? CoinIntelligence.currentCoin.id : 'bitcoin');
         }
     });
 
@@ -1076,6 +1086,19 @@ function setupInteractivity() {
             UI.renderAssetTable(coins);
             UI.renderWatchlist(coins, watchlist);
             UI.renderMarketCards(coins, watchlist);
+        }
+    });
+
+    // Coin Intelligence Research Trigger
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.ci-research-trigger-btn');
+        if (btn) {
+            e.stopPropagation();
+            e.preventDefault();
+            const id = btn.dataset.id;
+            await CoinIntelligence.loadCoin(id);
+            UI.switchView('coin-intelligence');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
 
