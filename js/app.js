@@ -5,6 +5,7 @@ import { UI } from './ui.js';
 import { InstitutionalAPI } from './institutional-api.js';
 import { InstitutionalUI } from './institutional-ui.js';
 import { CoinIntelligence } from './coin-intelligence.js';
+import { CryptoBubbles } from './crypto-bubbles.js';
 
 const COINS = [
     { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 64125.40, change: 2.45, cap: '1.26T', vol: '32.1B', icon: 'bitcoin', color: 'text-orange-500' },
@@ -516,6 +517,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Init Coin Intelligence
     CoinIntelligence.init();
 
+    // Init Crypto Bubbles
+    CryptoBubbles.init();
+
     // Initial View from Hash
     const initialView = window.location.hash.substring(1) || 'market';
     UI.switchView(initialView, false);
@@ -527,6 +531,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (initialView === 'coin-intelligence') {
         CoinIntelligence.loadCoin(CoinIntelligence.currentCoin ? CoinIntelligence.currentCoin.id : 'bitcoin');
+    }
+    if (initialView === 'crypto-bubbles') {
+        CryptoBubbles.setCoins(allCoins);
     }
 
     // Handle back/forward navigation
@@ -542,7 +549,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (view === 'coin-intelligence') {
             CoinIntelligence.loadCoin(CoinIntelligence.currentCoin ? CoinIntelligence.currentCoin.id : 'bitcoin');
         }
+        if (view === 'crypto-bubbles') {
+            CryptoBubbles.setCoins(allCoins);
+        }
     });
+
+    // Theme toggle for Crypto Bubbles
+    const themeToggleCb = document.getElementById('theme-toggle-cb');
+    if (themeToggleCb) {
+        themeToggleCb.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            Store.setTheme(isDark ? 'dark' : 'light');
+        });
+    }
 
     // Load live data
     await loadDashboardData();
@@ -636,9 +655,16 @@ async function loadDashboardData() {
             image: c.image,
             sparkline: c.sparkline_in_7d.price,
             price_change_24h: c.price_change_24h,
-            rank: c.market_cap_rank
+            rank: c.market_cap_rank,
+            price_change_percentage_1h_in_currency: c.price_change_percentage_1h_in_currency || 0,
+            price_change_percentage_7d_in_currency: c.price_change_percentage_7d_in_currency || 0,
+            price_change_percentage_30d_in_currency: c.price_change_percentage_30d_in_currency || 0,
+            price_change_percentage_1y_in_currency: c.price_change_percentage_1y_in_currency || 0
         }));
         window.allCoins = allCoins;
+
+        // Push latest data to CryptoBubbles visualizer
+        CryptoBubbles.setCoins(allCoins);
 
         const news = await API.fetchNews();
         const portfolio = Store.getPortfolio();
