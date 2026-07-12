@@ -958,10 +958,13 @@ function setupInteractivity() {
         const deleteBtn = e.target.closest('.delete-asset-btn');
 
         if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
             const id = editBtn.dataset.id;
             const portfolio = Store.getPortfolio();
             const asset = portfolio.find(item => item.id === id);
-            const coin = allCoins.find(c => c.id === id);
+            const coins = allCoins.length > 0 ? allCoins : COINS;
+            const coin = coins.find(c => c.id === id);
 
             if (asset && coin) {
                 document.getElementById('modal-title').innerText = 'Edit Asset';
@@ -979,11 +982,14 @@ function setupInteractivity() {
         }
 
         if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
             const id = deleteBtn.dataset.id;
+            const coins = allCoins.length > 0 ? allCoins : COINS;
             if (confirm('Are you sure you want to remove this asset?')) {
                 const portfolio = Store.removeFromPortfolio(id);
-                UI.renderPortfolio(portfolio, allCoins);
-                UI.renderPortfolioPanel(portfolio, allCoins);
+                UI.renderPortfolio(portfolio, coins);
+                UI.renderPortfolioPanel(portfolio, coins);
                 UI.showNotification('Asset removed from portfolio', 'info');
             }
         }
