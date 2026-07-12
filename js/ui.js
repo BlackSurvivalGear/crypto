@@ -1222,31 +1222,43 @@ export const UI = {
 
     switchView(view, updateHash = true) {
         const marketView = document.getElementById('market-view');
+        const scannerView = document.getElementById('scanner-view');
         const institutionalView = document.getElementById('institutional-view');
         const coinIntelligenceView = document.getElementById('coin-intelligence-view');
         const cryptoBubblesView = document.getElementById('crypto-bubbles-view');
         const navItems = document.querySelectorAll('.nav-item');
 
-        if (view === 'institutional') {
+        if (view === 'scanner') {
             marketView.classList.add('hidden');
+            if (institutionalView) institutionalView.classList.add('hidden');
+            if (coinIntelligenceView) coinIntelligenceView.classList.add('hidden');
+            if (cryptoBubblesView) cryptoBubblesView.classList.add('hidden');
+            if (scannerView) scannerView.classList.remove('hidden');
+            if (updateHash) window.location.hash = 'scanner';
+        } else if (view === 'institutional') {
+            marketView.classList.add('hidden');
+            if (scannerView) scannerView.classList.add('hidden');
             if (coinIntelligenceView) coinIntelligenceView.classList.add('hidden');
             if (cryptoBubblesView) cryptoBubblesView.classList.add('hidden');
             institutionalView.classList.remove('hidden');
             if (updateHash) window.location.hash = 'institutional';
         } else if (view === 'coin-intelligence') {
             marketView.classList.add('hidden');
+            if (scannerView) scannerView.classList.add('hidden');
             if (institutionalView) institutionalView.classList.add('hidden');
             if (cryptoBubblesView) cryptoBubblesView.classList.add('hidden');
             if (coinIntelligenceView) coinIntelligenceView.classList.remove('hidden');
             if (updateHash) window.location.hash = 'coin-intelligence';
         } else if (view === 'crypto-bubbles') {
             marketView.classList.add('hidden');
+            if (scannerView) scannerView.classList.add('hidden');
             if (institutionalView) institutionalView.classList.add('hidden');
             if (coinIntelligenceView) coinIntelligenceView.classList.add('hidden');
             if (cryptoBubblesView) cryptoBubblesView.classList.remove('hidden');
             if (updateHash) window.location.hash = 'crypto-bubbles';
         } else {
             marketView.classList.remove('hidden');
+            if (scannerView) scannerView.classList.add('hidden');
             if (institutionalView) institutionalView.classList.add('hidden');
             if (coinIntelligenceView) coinIntelligenceView.classList.add('hidden');
             if (cryptoBubblesView) cryptoBubblesView.classList.add('hidden');

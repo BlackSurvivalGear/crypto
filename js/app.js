@@ -6,6 +6,7 @@ import { InstitutionalAPI } from './institutional-api.js';
 import { InstitutionalUI } from './institutional-ui.js';
 import { CoinIntelligence } from './coin-intelligence.js';
 import { CryptoBubbles } from './crypto-bubbles.js';
+import { CoinScanner } from './scanner.js';
 
 const COINS = [
     { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: 64125.40, change: 2.45, cap: '1.26T', vol: '32.1B', icon: 'bitcoin', color: 'text-orange-500' },
@@ -274,6 +275,9 @@ const InstitutionalTerminalOrchestrator = {
                 } else {
                     this.stopRefreshing();
                 }
+                if (view === 'scanner') {
+                    CoinScanner.updateUI();
+                }
             });
         });
 
@@ -520,6 +524,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Init Crypto Bubbles
     CryptoBubbles.init();
 
+    // Init AI Market Scanner
+    CoinScanner.init();
+
     // Initial View from Hash
     const initialView = window.location.hash.substring(1) || 'market';
     UI.switchView(initialView, false);
@@ -534,6 +541,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (initialView === 'crypto-bubbles') {
         CryptoBubbles.setCoins(allCoins);
+    }
+    if (initialView === 'scanner') {
+        CoinScanner.updateUI();
     }
 
     // Handle back/forward navigation
@@ -551,6 +561,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (view === 'crypto-bubbles') {
             CryptoBubbles.setCoins(allCoins);
+        }
+        if (view === 'scanner') {
+            CoinScanner.updateUI();
         }
     });
 

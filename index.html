@@ -297,6 +297,10 @@
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Market Overview</span>
                 </button>
+                <button data-view="scanner" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
+                    <i data-lucide="radar" class="w-6 h-6"></i>
+                    <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">AI Market Scanner</span>
+                </button>
                 <button data-view="institutional" class="nav-item p-4 rounded-2xl transition-all group relative text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300">
                     <i data-lucide="terminal" class="w-6 h-6"></i>
                     <span class="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">Institutional Terminal</span>
@@ -325,6 +329,10 @@
             <button data-view="market" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 bg-blue-600 text-white">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                 <span class="text-[10px] font-bold">Market</span>
+            </button>
+            <button data-view="scanner" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
+                <i data-lucide="radar" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Scanner</span>
             </button>
             <button data-view="institutional" class="nav-item p-3 rounded-xl transition-all flex flex-col items-center gap-1 text-slate-400">
                 <i data-lucide="terminal" class="w-5 h-5"></i>
@@ -820,6 +828,366 @@
                         </div>
                     </div>
                 </footer>
+            </div>
+
+            <!-- AI Market Scanner & Research Engine View -->
+            <div id="scanner-view" class="container mx-auto px-4 py-6 hidden">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 py-4 border-b border-white/5">
+                    <div>
+                        <h1 class="text-2xl font-black flex items-center gap-3 tracking-tight text-amber-500">
+                            <i data-lucide="radar" class="w-8 h-8 text-amber-500 animate-pulse"></i>
+                            AI MARKET <span class="text-white">SCANNER & ENGINE</span>
+                        </h1>
+                        <p class="text-slate-500 dark:text-dark-muted text-xs font-medium uppercase tracking-wider">Continuous Multi-Factor Cryptographic Scanning & On-Chain Predictive Intelligence</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div id="scanner-live-badge" class="flex items-center gap-2 px-4 py-2 bg-amber-500/10 text-amber-500 rounded-full text-xs font-bold border border-amber-500/20">
+                            <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                            SCANNER ACTIVE
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticker Quick Statistics -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div class="glass-panel rounded-xl p-4 border border-white/5 flex flex-col justify-between">
+                        <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest">Assets Scanned</span>
+                        <div class="text-xl font-black text-white mt-1">100+ Live</div>
+                        <span class="text-[8px] text-emerald-500 font-bold">100% Core coverage</span>
+                    </div>
+                    <div class="glass-panel rounded-xl p-4 border border-white/5 flex flex-col justify-between">
+                        <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest">High-Conviction Picks</span>
+                        <div class="text-xl font-black text-emerald-500 mt-1" id="sc-high-conviction-count">12 Assets</div>
+                        <span class="text-[8px] text-dark-muted">Score >= 75/100</span>
+                    </div>
+                    <div class="glass-panel rounded-xl p-4 border border-white/5 flex flex-col justify-between">
+                        <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest">Active Alerts</span>
+                        <div class="text-xl font-black text-amber-500 mt-1" id="sc-active-alerts-count">4 Triggers</div>
+                        <span class="text-[8px] text-dark-muted">Rule matching active</span>
+                    </div>
+                    <div class="glass-panel rounded-xl p-4 border border-white/5 flex flex-col justify-between">
+                        <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest">AI Provider Status</span>
+                        <div class="text-xl font-black mt-1 text-blue-400" id="sc-provider-badge">Local AI</div>
+                        <span class="text-[8px] text-dark-muted" id="sc-provider-sub">Heuristic mode</span>
+                    </div>
+                    <div class="glass-panel rounded-xl p-4 border border-white/5 flex flex-col justify-between">
+                        <span class="text-[9px] font-black text-dark-muted uppercase tracking-widest">Scanner Refresh</span>
+                        <div class="text-xl font-black text-white mt-1" id="sc-refresh-countdown">15s</div>
+                        <span class="text-[8px] text-dark-muted">Continuous background loop</span>
+                    </div>
+                </div>
+
+                <!-- Sub-tabs Switcher -->
+                <div class="flex border-b border-white/5 mb-8 overflow-x-auto no-scrollbar gap-2">
+                    <button class="scanner-tab-btn px-6 py-3 font-bold text-xs uppercase tracking-wider transition-all border-b-2 border-amber-500 text-white" data-scanner-tab="dashboard">
+                        Scanner Dashboard
+                    </button>
+                    <button class="scanner-tab-btn px-6 py-3 font-bold text-xs uppercase tracking-wider transition-all border-b-2 border-transparent text-slate-400 hover:text-white" data-scanner-tab="alerts">
+                        Alerts Center
+                    </button>
+                    <button class="scanner-tab-btn px-6 py-3 font-bold text-xs uppercase tracking-wider transition-all border-b-2 border-transparent text-slate-400 hover:text-white" data-scanner-tab="copilot">
+                        AI Copilot Terminal
+                    </button>
+                    <button class="scanner-tab-btn px-6 py-3 font-bold text-xs uppercase tracking-wider transition-all border-b-2 border-transparent text-slate-400 hover:text-white" data-scanner-tab="settings">
+                        AI Config
+                    </button>
+                </div>
+
+                <!-- Tab 1: Scanner Dashboard -->
+                <div id="sc-tab-dashboard" class="space-y-8 scanner-tab-content">
+                    <!-- Scanner Filter controls -->
+                    <div class="glass-panel rounded-2xl p-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div class="flex items-center gap-3 w-full md:w-auto">
+                            <i data-lucide="filter" class="w-4 h-4 text-amber-500"></i>
+                            <span class="text-xs font-bold text-white uppercase tracking-wider">Quick Filters:</span>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="sc-filter-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-white uppercase hover:border-amber-500/20 active" data-filter="all">All Assets</button>
+                                <button class="sc-filter-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase hover:border-amber-500/20" data-filter="bullish">Strong Bullish</button>
+                                <button class="sc-filter-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase hover:border-amber-500/20" data-filter="breakout">Breakout Potential</button>
+                                <button class="sc-filter-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase hover:border-amber-500/20" data-filter="whale">Whale Buying</button>
+                                <button class="sc-filter-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase hover:border-amber-500/20" data-filter="highrisk">High Risk</button>
+                            </div>
+                        </div>
+                        <div class="relative w-full md:w-64">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-muted"></i>
+                            <input type="text" id="sc-dashboard-search" placeholder="Search scanned assets..." class="w-full bg-dark-bg border border-white/5 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <!-- Layout Grid: Left (Picks & widgets) / Right (Scanners feeds) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Column 1 & 2: Main Widgets -->
+                        <div class="lg:col-span-2 space-y-8">
+                            <!-- Top Picks Table -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                        <i data-lucide="award" class="w-4 h-4"></i> High-Conviction AI Screener Picks
+                                    </h3>
+                                    <span class="text-[10px] font-black text-dark-muted uppercase">Sorted by AI Rating</span>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-xs divide-y divide-white/5" id="sc-picks-table">
+                                        <!-- Rendered dynamically -->
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Dashboard Category Widgets Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Top Breakouts widget -->
+                                <div class="glass-panel rounded-xl p-5 space-y-4">
+                                    <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                                        <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> High-Probability Breakouts
+                                    </h4>
+                                    <div class="space-y-3" id="widget-breakouts">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+
+                                <!-- Smart Money Accumulation -->
+                                <div class="glass-panel rounded-xl p-5 space-y-4">
+                                    <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Smart Money Accumulation
+                                    </h4>
+                                    <div class="space-y-3" id="widget-accumulation">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+
+                                <!-- Fastest Growing Narratives -->
+                                <div class="glass-panel rounded-xl p-5 space-y-4">
+                                    <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Fastest Growing Narratives
+                                    </h4>
+                                    <div class="space-y-3" id="widget-narratives">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+
+                                <!-- Highest Risk Assets -->
+                                <div class="glass-panel rounded-xl p-5 space-y-4">
+                                    <h4 class="text-[10px] font-black text-red-500 uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Highest Risk Warning Flags
+                                    </h4>
+                                    <div class="space-y-3" id="widget-risk">
+                                        <!-- Injected -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Live Feeds -->
+                        <div class="space-y-8">
+                            <!-- Live Whale Buys & Sells -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                        <i data-lucide="whale" class="w-4 h-4 text-blue-500"></i> Whale Transaction Feed
+                                    </h3>
+                                    <select id="sc-whale-threshold" class="bg-dark-bg border border-white/5 text-[9px] font-black uppercase text-dark-muted rounded px-2 py-1">
+                                        <option value="100000">> $100k</option>
+                                        <option value="500000">> $500k</option>
+                                        <option value="1000000" selected>> $1M</option>
+                                        <option value="10000000">> $10M</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-3 max-h-[380px] overflow-y-auto no-scrollbar" id="sc-whale-list">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+
+                            <!-- Exchange Flow Tracker -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-4 border-b border-white/5 pb-3 flex items-center gap-2">
+                                    <i data-lucide="arrow-left-right" class="w-4 h-4 text-purple-500"></i> Exchange Net Flows (24H)
+                                </h3>
+                                <div class="space-y-3" id="sc-exchange-flows">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+
+                            <!-- Capital Sector Rotation -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-4 border-b border-white/5 pb-3 flex items-center gap-2">
+                                    <i data-lucide="shuffle" class="w-4 h-4 text-pink-500"></i> Capital Sector Rotation
+                                </h3>
+                                <div class="space-y-4" id="sc-rotations">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Alerts Center -->
+                <div id="sc-tab-alerts" class="space-y-8 scanner-tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Create alert rule form -->
+                        <div class="glass-panel rounded-2xl p-6 space-y-6 self-start">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 border-b border-white/5 pb-3">Create Intelligent AI Alert</h3>
+                            <form id="sc-create-alert-form" class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-dark-muted uppercase tracking-widest mb-1">Select Asset</label>
+                                    <select id="sc-alert-coin" class="w-full bg-dark-bg border border-white/5 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                        <!-- Injected dynamically -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-dark-muted uppercase tracking-widest mb-1">Condition Parameter</label>
+                                    <select id="sc-alert-metric" class="w-full bg-dark-bg border border-white/5 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                        <option value="ai-score" selected>AI Score > Value</option>
+                                        <option value="whale-buy">Whale Buy Amount (USD) > Value</option>
+                                        <option value="volume-increase">Volume Increase % > Value</option>
+                                        <option value="exchange-outflow">Exchange Outflow (USD) > Value</option>
+                                        <option value="funding-rate">Funding Rate becomes Negative</option>
+                                        <option value="narrative-growth">Narrative Score Increase % > Value</option>
+                                        <option value="breakout">New Breakout Detected</option>
+                                        <option value="institutional">Institutional Buy Detected</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-dark-muted uppercase tracking-widest mb-1">Target Threshold Value</label>
+                                    <input type="number" id="sc-alert-val" placeholder="e.g. 90 or 5000000" class="w-full bg-dark-bg border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                </div>
+                                <button type="submit" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-dark-bg font-black uppercase rounded-xl transition-all shadow-lg shadow-amber-500/20 text-xs tracking-wider">
+                                    Activate AI Alert Trigger
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Active rules and alert logs -->
+                        <div class="lg:col-span-2 space-y-8">
+                            <!-- Active alert triggers -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-4 border-b border-white/5 pb-3">Active Scanner Triggers</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="sc-active-triggers">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+
+                            <!-- In-app alerts log -->
+                            <div class="glass-panel rounded-2xl p-6">
+                                <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-amber-500 flex items-center gap-2">
+                                        <i data-lucide="bell-ring" class="w-4 h-4 animate-bounce"></i> Real-time Scanner Alerts Log
+                                    </h3>
+                                    <button id="sc-clear-alerts" class="text-[10px] font-black uppercase text-red-500 hover:underline">Clear Logs</button>
+                                </div>
+                                <div class="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar" id="sc-alerts-log">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: AI Copilot -->
+                <div id="sc-tab-copilot" class="glass-panel rounded-3xl p-6 md:p-8 space-y-6 scanner-tab-content hidden" style="min-height: 550px;">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-4 gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-amber-500 animate-pulse"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black uppercase text-white tracking-wider">BlackStack AI Copilot</h3>
+                                <p class="text-[10px] text-dark-muted font-bold uppercase tracking-widest mt-0.5">Real-time LLM-Powered Market Assistant</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-dark-muted font-bold uppercase tracking-widest block">Active Copilot Status</span>
+                            <span class="text-[10px] font-black text-emerald-500" id="copilot-provider-status">Using Simulated Local Engine</span>
+                        </div>
+                    </div>
+
+                    <!-- Conversation logger -->
+                    <div class="flex-1 bg-dark-bg/80 border border-white/5 rounded-2xl p-6 overflow-y-auto h-[350px] space-y-4 no-scrollbar" id="sc-copilot-chat">
+                        <!-- Messages injected here -->
+                    </div>
+
+                    <!-- Prompt suggestions -->
+                    <div class="space-y-2">
+                        <span class="text-[10px] font-bold text-dark-muted uppercase tracking-widest block">Suggested Terminal Instructions</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="copilot-suggest-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:border-amber-500/20 hover:text-white transition-all">"Find coins being accumulated."</button>
+                            <button class="copilot-suggest-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:border-amber-500/20 hover:text-white transition-all">"What sectors are outperforming?"</button>
+                            <button class="copilot-suggest-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:border-amber-500/20 hover:text-white transition-all">"Which AI coins have institutional buying?"</button>
+                            <button class="copilot-suggest-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:border-amber-500/20 hover:text-white transition-all">"Show hidden gems."</button>
+                            <button class="copilot-suggest-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:border-amber-500/20 hover:text-white transition-all">"Which Layer 2 projects have increasing developer activity?"</button>
+                            <button class="copilot-suggest-btn px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:border-amber-500/20 hover:text-white transition-all">"What coins have breakout probability above 80%?"</button>
+                        </div>
+                    </div>
+
+                    <!-- Chat inputs -->
+                    <div class="flex gap-4">
+                        <input type="text" id="sc-copilot-input" placeholder="Query AI Copilot about any market indicator, asset, or sector rotation..." class="flex-1 bg-dark-bg border border-white/5 rounded-xl px-5 py-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        <button id="sc-copilot-send" class="px-6 bg-amber-500 hover:bg-amber-600 text-dark-bg font-black uppercase rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: AI Config / Settings -->
+                <div id="sc-tab-settings" class="glass-panel rounded-3xl p-6 md:p-8 space-y-8 scanner-tab-content hidden">
+                    <div class="max-w-xl space-y-6">
+                        <div>
+                            <h3 class="text-sm font-black uppercase text-white tracking-wider">AI API Credentials Provider</h3>
+                            <p class="text-xs text-dark-muted mt-1 leading-relaxed">Configure user-supplied API keys securely in your browser's encrypted vault. BlackStack does not store keys on any shared server. All AI actions occur directly from your device utilizing your custom endpoints.</p>
+                        </div>
+
+                        <!-- Provider selector -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-dark-muted uppercase tracking-widest mb-1.5">Select AI Provider</label>
+                                <select id="sc-settings-provider" class="w-full bg-dark-bg border border-white/5 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                    <option value="openai">OpenAI (GPT-4o, GPT-4o-mini)</option>
+                                    <option value="anthropic">Anthropic Claude (Claude 3.5 Sonnet)</option>
+                                    <option value="gemini">Google Gemini (Gemini 1.5 Pro)</option>
+                                    <option value="openrouter">OpenRouter (Any open LLM model)</option>
+                                    <option value="deepseek">DeepSeek (DeepSeek-V3)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-dark-muted uppercase tracking-widest mb-1.5">Enter API Key</label>
+                                <div class="relative">
+                                    <input type="password" id="sc-settings-key" placeholder="sk-..." class="w-full bg-dark-bg border border-white/5 rounded-xl pl-4 pr-12 py-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono">
+                                    <button id="sc-toggle-key-visibility" class="absolute right-4 top-1/2 -translate-y-1/2 text-dark-muted hover:text-white transition-colors" type="button">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 pt-4">
+                                <button id="sc-save-key-btn" class="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-dark-bg font-black uppercase rounded-xl transition-all shadow-lg shadow-amber-500/20 text-xs tracking-wider">
+                                    Save Provider Key
+                                </button>
+                                <button id="sc-delete-key-btn" class="py-3.5 px-6 bg-red-600/15 border border-red-500/20 hover:bg-red-600 text-white font-black uppercase rounded-xl transition-all text-xs tracking-wider">
+                                    Delete Key
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Status and connection checking -->
+                        <div class="border-t border-white/5 pt-6 space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                <div>
+                                    <span class="text-[9px] font-black text-dark-muted uppercase block">API Connection Status</span>
+                                    <span class="text-sm font-black text-white" id="sc-connection-status">Not Configured</span>
+                                </div>
+                                <button id="sc-test-conn-btn" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-300">
+                                    Test Connection
+                                </button>
+                            </div>
+
+                            <div class="bg-blue-600/5 border border-blue-500/10 rounded-2xl p-5 text-xs text-blue-400 space-y-2">
+                                <h4 class="font-bold flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> Encrypted Local Storage Vault</h4>
+                                <p class="leading-relaxed">Your custom credentials are stored directly inside your browser cache. They are encrypted at-rest using **AES-GCM (256-bit)** with client-derived key encryption. Credentials are never written to unsecure files or exposed to public server logs.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Institutional Intelligence Terminal View -->
