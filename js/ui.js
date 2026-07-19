@@ -108,7 +108,7 @@ export const UI = {
             const coin = watchlistCoins[i];
             if (coin) {
                 cards.push(`
-                    <div class="bg-white dark:bg-dark-card rounded-xl border ${this.currentCoinId === coin.id ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200 dark:border-dark-border'} p-5 hover:shadow-lg transition-all cursor-pointer fade-in market-card" data-id="${coin.id}" data-symbol="${coin.symbol}">
+                    <div class="bg-white dark:bg-dark-card rounded-2xl border ${this.currentCoinId === coin.id ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200 dark:border-dark-border'} p-5 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer fade-in market-card" data-id="${coin.id}" data-symbol="${coin.symbol}">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
@@ -131,7 +131,7 @@ export const UI = {
                 `);
             } else {
                 cards.push(`
-                    <div class="bg-slate-50/50 dark:bg-dark-card/50 rounded-xl border border-dashed border-slate-300 dark:border-dark-border p-5 flex flex-col items-center justify-center text-center opacity-60">
+                    <div class="bg-slate-50/50 dark:bg-dark-card/50 rounded-2xl border border-dashed border-slate-300 dark:border-dark-border p-5 flex flex-col items-center justify-center text-center opacity-60">
                         <div class="w-10 h-10 rounded-full border-2 border-dashed border-slate-300 dark:border-dark-border flex items-center justify-center mb-3">
                             <i data-lucide="plus" class="w-5 h-5 text-slate-400"></i>
                         </div>

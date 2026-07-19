@@ -556,11 +556,11 @@ export const CoinIntelligence = {
                     </div>
                 </div>
                 <div class="flex items-center gap-4 w-full md:w-auto">
-                    <button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl border font-bold text-xs transition-all duration-300 hover:scale-105 active:scale-95 ${watchlisted ? 'bg-amber-500 border-amber-500 text-dark-bg shadow-lg shadow-amber-500/20' : 'border-white/10 hover:border-amber-500/40 text-white'}" id="ci-watchlist-toggle">
+                    <button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl border font-bold text-xs transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${watchlisted ? 'bg-amber-500 border-amber-500 text-dark-bg shadow-lg shadow-amber-500/20' : 'border-white/10 hover:border-amber-500/40 text-white'}" id="ci-watchlist-toggle">
                         <i data-lucide="star" class="w-4 h-4 ${watchlisted ? 'fill-dark-bg' : ''}"></i>
                         <span>${watchlisted ? 'Watchlisted' : 'Add to Watchlist'}</span>
                     </button>
-                    <button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs transition-all duration-300 hover:scale-105 active:scale-95 ${portfoliod ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20'}" id="ci-portfolio-btn">
+                    <button class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${portfoliod ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20'}" id="ci-portfolio-btn">
                         <i data-lucide="briefcase" class="w-4 h-4"></i>
                         <span>${portfoliod ? 'In Portfolio' : 'Add Asset'}</span>
                     </button>
